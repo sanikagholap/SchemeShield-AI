@@ -1,71 +1,101 @@
 import { ChatMessage, PromptSuggestion } from '../types/assistant';
+import { SUGGESTED_ASSISTANT_QUESTIONS, MOCK_ASSISTANT_KNOWLEDGE_BASE } from '../data/mockAssistant';
 import { simulateLatency } from './apiClient';
-
-const DEFAULT_SUGGESTIONS: PromptSuggestion[] = [
-  {
-    id: 'sug-1',
-    category: 'Scam Detection',
-    title: 'Verify Registration Fee',
-    query: 'Is there any registration fee for PM Kisan Samman Nidhi or Ayushman Bharat?'
-  },
-  {
-    id: 'sug-2',
-    category: 'Official Portals',
-    title: 'Recognize Genuine Portals',
-    query: 'How can I identify if a government scheme portal is authentic vs fake domain?'
-  },
-  {
-    id: 'sug-3',
-    category: 'Loan Scams',
-    title: 'MUDRA Loan Sanction Letters',
-    query: 'I received a WhatsApp letter offering a ₹10 Lakh Mudra Loan asking for a 5% GST deposit. Is it genuine?'
-  },
-  {
-    id: 'sug-4',
-    category: 'Document Safety',
-    title: 'Safe eKYC Guidelines',
-    query: 'What documents does the government ask for scheme enrollment, and when is it a scam?'
-  }
-];
 
 export const assistantService = {
   /**
    * Get pre-configured prompt suggestions
    */
   async getPromptSuggestions(): Promise<PromptSuggestion[]> {
-    return simulateLatency(DEFAULT_SUGGESTIONS, 150);
+    return simulateLatency(SUGGESTED_ASSISTANT_QUESTIONS, 150);
   },
 
   /**
    * Send citizen question to AI assistant (Mock response generator)
    */
   async sendMessage(userMessage: string): Promise<ChatMessage> {
-    const lower = userMessage.toLowerCase();
-    let reply = `SchemeShield AI Assistant: Government welfare schemes generally DO NOT charge upfront registration fees or deposits through private bank accounts, UPI IDs, or third-party websites. Always verify on official domains ending with '.gov.in' or '.nic.in'.`;
+    const normalized = userMessage.toLowerCase().trim().replace(/[?.,!]/g, '');
 
-    if (lower.includes('fee') || lower.includes('money') || lower.includes('deposit') || lower.includes('gst')) {
-      reply = `⚠️ **Critical Advisory**: Legitimate Central and State Government schemes do NOT demand registration fees or GST deposits via WhatsApp or unofficial portals. Any requirement to pay money to receive a grant or loan sanction is almost certainly fraudulent.`;
-    } else if (lower.includes('mudra')) {
-      reply = `⚠️ **Alert regarding MUDRA Loans**: MUDRA loans are processed exclusively through authorized commercial banks, RRBs, and NBFCs. The Government never issues direct sanction letters on WhatsApp and NEVER charges a processing or GST deposit beforehand.`;
-    } else if (lower.includes('kisan')) {
-      reply = `🌾 **PM-KISAN Guidelines**: PM-KISAN provides direct benefit transfer (₹6,000/year in 3 installments) directly to Aadhaar-seeded bank accounts. There is NO "Free Tractor Scheme" under PM-KISAN, and official eKYC can be completed free on pmkisan.gov.in or CSC centers.`;
+    // Check exact or partial matches from knowledge base
+    let matchedAnswer: string | undefined;
+
+    for (const [key, answer] of Object.entries(MOCK_ASSISTANT_KNOWLEDGE_BASE)) {
+      if (normalized.includes(key) || key.includes(normalized)) {
+        matchedAnswer = answer;
+        break;
+      }
+    }
+
+    if (!matchedAnswer) {
+      if (
+        normalized.includes('tractor') ||
+        normalized.includes('free tractor')
+      ) {
+        matchedAnswer = `🚨 **Scam Alert — PM Free Tractor Scheme**:
+The Government of India is **NOT** running any free tractor scheme under PM-KISAN.
+• The official PM-KISAN initiative only provides ₹6,000 annual direct income support.
+• Fraudulent circulars demand ₹499 upfront registration fee via personal UPI.
+• PIB Fact Check has officially flagged this as a cyber scam. **Do not pay any money.**`;
+      } else if (
+        normalized.includes('ayushman') ||
+        normalized.includes('golden card')
+      ) {
+        matchedAnswer = `🏥 **Ayushman Bharat (PM-JAY) Official Guidance**:
+• The official Ayushman Golden Card is issued **100% free of cost** at government hospitals and Common Service Centres (CSCs).
+• Never pay ₹250 or any doorstep delivery fee to private websites ending in *.com*.
+• Eligible families are determined by SECC 2011 records. Self-verify at **beneficiary.nha.gov.in**.`;
+      } else if (
+        normalized.includes('fee') ||
+        normalized.includes('money') ||
+        normalized.includes('payment') ||
+        normalized.includes('upi')
+      ) {
+        matchedAnswer = `⚠️ **Critical Citizen Warning**:
+Genuine Central and State welfare programs **never charge registration fees** via WhatsApp, SMS links, or personal UPI IDs.
+If an announcement asks for an application fee, deposit, or document courier charge:
+1. Do not transfer funds.
+2. Verify the scheme on our **/verify** tool.
+3. Report the fraud to the National Cyber Crime Reporting Portal at **cybercrime.gov.in** or dial **1930**.`;
+      } else if (
+        normalized.includes('mudra') ||
+        normalized.includes('loan')
+      ) {
+        matchedAnswer = `💼 **MUDRA Loan Guidelines**:
+• MUDRA loans up to ₹20 Lakh are sanctioned directly through scheduled commercial banks and NBFCs.
+• The Ministry of Finance **never** issues WhatsApp sanction letters or requests 5% advance GST deposits.
+• Apply only through bank branches or the official **udyamimitra.in** portal.`;
+      } else if (
+        normalized.includes('scholarship')
+      ) {
+        matchedAnswer = `🎓 **National Scholarship Portal (NSP)**:
+• All verified Central Sector and Post-Matric scholarships are submitted via **scholarships.gov.in**.
+• Application submission is strictly free.
+• Disbursal occurs directly into the student's Aadhaar-linked PFMS bank account.`;
+      } else {
+        matchedAnswer = `SchemeShield AI Assistant:
+Government welfare initiatives never solicit advance registration fees, personal UPI transfers, or sensitive banking OTPs.
+• Check if the portal URL ends in **.gov.in** or **.nic.in**.
+• Cross-reference official guidelines on **myScheme (myscheme.gov.in)**.
+• You can test any suspicious text or upload documents directly on our **/verify** page for instant automated analysis.`;
+      }
     }
 
     const assistantMsg: ChatMessage = {
       id: `ast-${Date.now()}`,
       sender: 'assistant',
-      content: reply,
-      timestamp: 'Just now',
+      content: matchedAnswer,
+      timestamp: new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit' }).format(new Date()),
       sources: [
-        { name: 'PIB Fact Check Registry', url: 'https://factcheck.pib.gov.in' },
+        { name: 'myScheme Official Catalog', url: 'https://myscheme.gov.in' },
+        { name: 'PIB Fact Check Bureau', url: 'https://factcheck.pib.gov.in' },
         { name: 'National Portal of India', url: 'https://india.gov.in' }
       ],
       suggestedActions: [
-        { label: 'Run Full Scheme Verification', route: '/verify' },
+        { label: 'Verify a Suspicious Claim', route: '/verify' },
         { label: 'Explore Verified Schemes', route: '/schemes' }
       ]
     };
 
-    return simulateLatency(assistantMsg, 600);
+    return simulateLatency(assistantMsg, 500);
   }
 };

@@ -11,4 +11,8 @@ export interface HistoryItem {
   status: VerificationStatus;
   method: VerificationMethod;
   flagCount: number;
+  summary?: string;
+  resultId?: string; // Links directly to verification result
 }
+
+export type VerificationHistoryItem = HistoryItem;

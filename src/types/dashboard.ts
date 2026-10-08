@@ -19,6 +19,8 @@ export interface DashboardNotification {
   link?: string;
 }
 
+export type Notification = DashboardNotification;
+
 export interface RiskDistribution {
   trustedPercent: number;
   suspiciousPercent: number;

@@ -1,8 +1,8 @@
-import { OfficialScheme } from '../types/scheme';
+import { GovernmentScheme } from '../types/scheme';
 import { VerificationResult } from '../types/verification';
 import { HistoryItem } from '../types/history';
 
-export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
+export const MOCK_OFFICIAL_SCHEMES: GovernmentScheme[] = [
   {
     id: 'pm-kisan',
     code: 'PM-KISAN',
@@ -11,7 +11,7 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     ministry: 'Ministry of Agriculture & Farmers Welfare',
     nodalDepartment: 'Department of Agriculture and Farmers Welfare',
     launchYear: 2019,
-    category: 'Agriculture & Farmers',
+    category: 'Agriculture',
     shortDescription: 'Income support of ₹6,000 per year in three equal installments to all landholding farmer families across the country.',
     detailedObjective: 'To augment the income of all landholding farmer families for meeting their financial needs in procuring agricultural inputs and domestic obligations.',
     officialPortalUrl: 'https://pmkisan.gov.in',
@@ -22,10 +22,16 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     applicationFee: 'FREE',
     isDirectBenefitTransfer: true,
     knownScamsOrAlerts: [
-      'Scam Alert: Fake "Free Tractor Scheme" portals charging ₹500 registration fee under PM-KISAN name.',
+      'Scam Alert: Fake "Free Tractor Scheme" portals charging ₹499 registration fee under PM-KISAN name.',
       'Scam Alert: Fake APK files sent via WhatsApp requesting biometric or banking OTPs for eKYC.'
     ],
-    verifiedStatus: 'OFFICIALLY_ACTIVE'
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 4,
+    confidenceScore: 99,
+    lastReviewedDate: 'Oct 04, 2026',
+    sourceAuthority: 'Ministry of Agriculture & Farmers Welfare (pmkisan.gov.in)',
+    similarSchemes: ['PM Kisan Maandhan Yojana', 'Rythu Bandhu Scheme']
   },
   {
     id: 'pmjay',
@@ -35,7 +41,7 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     ministry: 'Ministry of Health and Family Welfare',
     nodalDepartment: 'National Health Authority (NHA)',
     launchYear: 2018,
-    category: 'Healthcare & Wellness',
+    category: 'Healthcare',
     shortDescription: 'World’s largest health assurance scheme providing health cover of ₹5 lakh per family per year for secondary and tertiary care hospitalization.',
     detailedObjective: 'To provide catastrophic health expenditure protection and quality health care access to vulnerable socio-economic groups.',
     officialPortalUrl: 'https://pmjay.gov.in',
@@ -49,7 +55,42 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
       'Scam Alert: Phishing websites charging ₹250-₹500 for "Instant Ayushman Gold Card download".',
       'Scam Alert: Unofficial apps claiming to issue cards to unlisted citizens for upfront money.'
     ],
-    verifiedStatus: 'OFFICIALLY_ACTIVE'
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 8,
+    confidenceScore: 98,
+    lastReviewedDate: 'Oct 06, 2026',
+    sourceAuthority: 'National Health Authority (pmjay.gov.in)',
+    similarSchemes: ['Ayushman Bharat Digital Mission (ABDM)', 'Rashtriya Swasthya Bima Yojana']
+  },
+  {
+    id: 'post-matric-scholarship',
+    code: 'PMS-OBC-SC',
+    title: 'National Post-Matric Merit Scholarship Scheme',
+    alternateNames: ['NSP Post-Matric Scholarship', 'Central Sector Scholarship'],
+    ministry: 'Ministry of Social Justice and Empowerment',
+    nodalDepartment: 'Department of Higher Education',
+    launchYear: 2018,
+    category: 'Education',
+    shortDescription: 'Financial assistance to meritorious students belonging to economically disadvantaged backgrounds for pursuing post-secondary education.',
+    detailedObjective: 'Reduce student dropout rates post Class 10 by providing annual maintenance allowances and tuition support directly via PFMS.',
+    officialPortalUrl: 'https://scholarships.gov.in',
+    officialHelpline: '0120-6619540',
+    targetBeneficiaries: ['Post-secondary and higher education university students'],
+    keyBenefits: ['Direct annual maintenance allowance up to ₹20,000 plus full tuition fee reimbursement disbursed via DBT.'],
+    eligibilityCriteria: ['Enrolled in recognized higher secondary, college, or university courses.', 'Family annual income under ₹2.50 Lakhs.'],
+    applicationFee: 'FREE',
+    isDirectBenefitTransfer: true,
+    knownScamsOrAlerts: [
+      'Alert: Unofficial consultancy services offering scholarship approvals in exchange for a 10% commission.'
+    ],
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 2,
+    confidenceScore: 99,
+    lastReviewedDate: 'Oct 07, 2026',
+    sourceAuthority: 'National Scholarship Portal (scholarships.gov.in)',
+    similarSchemes: ['National Means-cum-Merit Scholarship', 'Pre-Matric Scholarship Scheme']
   },
   {
     id: 'pm-mudra',
@@ -59,7 +100,7 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     ministry: 'Ministry of Finance',
     nodalDepartment: 'Department of Financial Services',
     launchYear: 2015,
-    category: 'Financial Inclusion & Credit',
+    category: 'Financial Assistance',
     shortDescription: 'Refinance support to micro enterprises with collateral-free loans up to ₹20 lakh under Shishu, Kishore, and Tarun categories.',
     detailedObjective: 'Funding the unfunded: providing formal credit access to non-corporate, non-farm small and micro enterprises.',
     officialPortalUrl: 'https://www.mudra.org.in',
@@ -72,7 +113,42 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     knownScamsOrAlerts: [
       'Scam Alert: Fraudulent sanction letters issued via WhatsApp demanding 5% GST/approval fee deposit.'
     ],
-    verifiedStatus: 'OFFICIALLY_ACTIVE'
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 12,
+    confidenceScore: 96,
+    lastReviewedDate: 'Oct 02, 2026',
+    sourceAuthority: 'Department of Financial Services (mudra.org.in)',
+    similarSchemes: ['Stand-Up India Scheme', 'PM SVANidhi Scheme']
+  },
+  {
+    id: 'pmkvy-employment',
+    code: 'PMKVY-4.0',
+    title: 'Pradhan Mantri Kaushal Vikas Yojana',
+    alternateNames: ['Skill India Mission', 'PMKVY 4.0'],
+    ministry: 'Ministry of Skill Development and Entrepreneurship',
+    nodalDepartment: 'National Skill Development Corporation (NSDC)',
+    launchYear: 2015,
+    category: 'Employment',
+    shortDescription: 'Skill certification scheme aimed at training youth in industry-relevant skills with direct placement assistance and government stipends.',
+    detailedObjective: 'Enable youth to take up industry-relevant skill training that helps them secure a better livelihood.',
+    officialPortalUrl: 'https://www.skillindiadigital.gov.in',
+    officialHelpline: '088000-55555',
+    targetBeneficiaries: ['School/college dropouts, unemployed youth, and rural candidates aged 15-45'],
+    keyBenefits: ['100% free technical skill certification, monetary reward upon certification, and placement job fair access.'],
+    eligibilityCriteria: ['Indian national possessing Aadhaar card and meeting specific job role educational qualification.'],
+    applicationFee: 'FREE',
+    isDirectBenefitTransfer: true,
+    knownScamsOrAlerts: [
+      'Alert: Fake training centers demanding upfront exam fee for guaranteed government jobs.'
+    ],
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 6,
+    confidenceScore: 97,
+    lastReviewedDate: 'Oct 05, 2026',
+    sourceAuthority: 'Skill India Digital (skillindiadigital.gov.in)',
+    similarSchemes: ['Deen Dayal Upadhyaya Grameen Kaushalya Yojana (DDU-GKY)', 'Apprenticeship Training Scheme']
   },
   {
     id: 'sukanya-samriddhi',
@@ -95,7 +171,42 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     knownScamsOrAlerts: [
       'Scam Alert: Fake online portals claiming to disburse ₹50,000 cash grant upon girl child registration.'
     ],
-    verifiedStatus: 'OFFICIALLY_ACTIVE'
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 3,
+    confidenceScore: 99,
+    lastReviewedDate: 'Sep 28, 2026',
+    sourceAuthority: 'India Post & Ministry of Finance (indiapost.gov.in)',
+    similarSchemes: ['Beti Bachao Beti Padhao Scheme', 'Mahila Samman Savings Certificate']
+  },
+  {
+    id: 'atal-pension-yojana',
+    code: 'APY',
+    title: 'Atal Pension Yojana',
+    alternateNames: ['APY Pension', 'National Pension Scheme - Swavalamban'],
+    ministry: 'Ministry of Finance',
+    nodalDepartment: 'Pension Fund Regulatory and Development Authority (PFRDA)',
+    launchYear: 2015,
+    category: 'Social Welfare',
+    shortDescription: 'Guaranteed pension scheme for unorganized sector workers offering monthly pensions from ₹1,000 to ₹5,000 after 60 years of age.',
+    detailedObjective: 'Provide social security in old age to workers in the unorganized sector through government-co-contributed retirement corpus.',
+    officialPortalUrl: 'https://www.npscra.nsdl.co.in',
+    officialHelpline: '1800 110 069',
+    targetBeneficiaries: ['All citizens between 18 and 40 years holding a savings bank account'],
+    keyBenefits: ['Guaranteed monthly pension of ₹1,000 to ₹5,000 after age 60 with nominee corpus handover upon death.'],
+    eligibilityCriteria: ['Open to all bank account holders aged 18-40. Income tax payers are excluded from joining since Oct 2022.'],
+    applicationFee: 'FREE (Only monthly savings debit as per age chart)',
+    isDirectBenefitTransfer: false,
+    knownScamsOrAlerts: [
+      'Alert: Unofficial SMS promising ₹10,000 monthly pension without monthly contributions.'
+    ],
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 5,
+    confidenceScore: 98,
+    lastReviewedDate: 'Oct 01, 2026',
+    sourceAuthority: 'PFRDA / NSDL (npscra.nsdl.co.in)',
+    similarSchemes: ['PM Shram Yogi Maandhan (PM-SYM)', 'National Pension System (NPS)']
   },
   {
     id: 'pm-awas-gramin',
@@ -105,7 +216,7 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     ministry: 'Ministry of Rural Development',
     nodalDepartment: 'Department of Rural Development',
     launchYear: 2016,
-    category: 'Housing & Urban Development',
+    category: 'Social Welfare',
     shortDescription: 'Financial assistance for construction of pucca houses with basic amenities to all houseless households in rural areas.',
     detailedObjective: 'Achieve "Housing for All" in rural India by providing financial assistance to build disaster-resilient houses.',
     officialPortalUrl: 'https://pmayg.nic.in',
@@ -118,7 +229,13 @@ export const MOCK_OFFICIAL_SCHEMES: OfficialScheme[] = [
     knownScamsOrAlerts: [
       'Scam Alert: Intermediaries promising house allotment in exchange for ₹5,000 advance bribe or commission.'
     ],
-    verifiedStatus: 'OFFICIALLY_ACTIVE'
+    verifiedStatus: 'VERIFIED_AUTHENTIC',
+    statusLabel: 'Verified Authentic',
+    riskScore: 7,
+    confidenceScore: 98,
+    lastReviewedDate: 'Sep 30, 2026',
+    sourceAuthority: 'Ministry of Rural Development (pmayg.nic.in)',
+    similarSchemes: ['PMAY-Urban (PMAY-U)', 'Swachh Bharat Mission Gramin (Toilet subsidy)']
   }
 ];
 
@@ -133,86 +250,47 @@ export const MOCK_VERIFICATION_SAMPLE: VerificationResult = {
     schemeId: 'pm-kisan'
   },
   status: 'FAKE',
+  overallStatus: 'HIGH RISK',
   riskTier: 'CRITICAL',
   riskScore: 94,
   confidenceScore: 98,
-  summary: 'HIGH CRITICAL RISK: This claim impersonates the legitimate PM-KISAN initiative. No such "Free Tractor" program exists under this name. The referenced domain is not a registered .gov.in domain and solicits an unauthorized upfront registration fee of ₹499.',
-  detectedFlags: [
-    {
-      id: 'flag-1',
-      severity: 'CRITICAL',
-      title: 'Unauthorized Financial Demand',
-      description: 'Demands ₹499 upfront registration fee. Legitimate central schemes do not charge private processing fees for farmer welfare benefits.',
-      detectedPattern: 'Registration fee: ₹499 via private payment gateway'
-    },
-    {
-      id: 'flag-2',
-      severity: 'CRITICAL',
-      title: 'Spoofed Domain Architecture',
-      description: 'Domain "pmkisan-tractoryojana-gov.in" uses hyphenated keywords to mimic NIC/Gov domains. Official Indian portals strictly end in ".gov.in" or ".nic.in".',
-      detectedPattern: 'Non-NIC domain pretending to be government portal'
-    },
-    {
-      id: 'flag-3',
-      severity: 'WARNING',
-      title: 'Non-Existent Gazette Notification',
-      description: 'No gazette notification or parliamentary budget allocation corresponds to "PM Free Tractor Scheme 2026".',
-      detectedPattern: 'Zero match in PIB / MoA&FW database'
-    }
-  ],
-  evidenceSources: [
-    {
-      title: 'Press Information Bureau (PIB) Fact Check Advisory',
-      sourceType: 'PIB_FACT_CHECK',
-      matchScore: 99,
-      snippet: 'PIB Fact Check confirmed that Government of India is NOT running any PM Free Tractor Scheme. The viral portal is fraudulent.'
-    },
-    {
-      title: 'Ministry of Agriculture & Farmers Welfare Official Directory',
-      sourceUrl: 'https://pmkisan.gov.in',
-      sourceType: 'OFFICIAL_PORTAL',
-      matchScore: 95,
-      snippet: 'Official PM-KISAN portal lists only ₹6,000 annual income support. No vehicle subsidies are managed under PM-KISAN portal.'
-    }
-  ],
-  isDuplicateOrAltered: true,
-  duplicateComparison: {
-    originalSchemeName: 'PM-KISAN (Genuine)',
-    alteredDetails: [
-      'Genuine: Income support of ₹6,000/yr (No application fees)',
-      'Fake claim: Tractor subsidy requiring ₹499 advance registration fee',
-      'Genuine domain: pmkisan.gov.in vs Fake domain: pmkisan-tractoryojana-gov.in'
-    ]
-  },
+  summary: 'HIGH RISK FRAUD: Fictitious scheme clone demanding an upfront ₹499 payment. Debunked by PIB Fact Check bulletin.',
+  verdictDescription: 'Cross-referencing against verified Ministry of Agriculture archives revealed this claim to be an advance-fee fraud scam.',
+  method: 'TEXT',
+  verificationMethod: 'TEXT',
+  verifiedAt: '12 minutes ago',
   recommendation: 'DO NOT pay any money, DO NOT submit Aadhaar or bank credentials on this portal. Report this URL immediately to cybercrime.gov.in.',
-  verifiedAt: 'Just now',
-  verificationMethod: 'TEXT'
+  isMockDemo: true
 };
 
 export const MOCK_HISTORY_ITEMS: HistoryItem[] = [
   {
     id: 'hist-1',
     schemeName: 'PM Free Tractor Scheme 2026',
-    inputExcerpt: 'Deposit ₹499 registration fee on portal www.pmkisan-tractoryojana-gov.in...',
+    inputExcerpt: 'Deposit ₹499 registration fee on portal www.pmkisan-tractoryojana-gov.in to book your slot...',
     verifiedAt: '12 minutes ago',
     riskTier: 'CRITICAL',
     riskScore: 94,
     confidenceScore: 98,
-    status: 'FAKE',
+    status: 'HIGH RISK',
     method: 'TEXT',
-    flagCount: 3
+    flagCount: 3,
+    summary: 'Demands upfront ₹499 fee via personal UPI. Confirmed fake by PIB Fact Check.',
+    resultId: 'VER-2026-HIGH-RISK'
   },
   {
     id: 'hist-2',
     schemeName: 'Ayushman Bharat Golden Card Registration',
-    inputExcerpt: 'Download Ayushman card instantly for all citizens regardless of ration card...',
+    inputExcerpt: 'Download Ayushman card instantly for ₹250 doorstep delivery without BPL card...',
     verifiedAt: '2 hours ago',
     riskTier: 'HIGH',
-    riskScore: 78,
-    confidenceScore: 92,
+    riskScore: 64,
+    confidenceScore: 87,
     status: 'SUSPICIOUS',
     method: 'URL',
-    flagCount: 2
+    flagCount: 2,
+    summary: 'Unofficial commercial .com domain charging ₹250 for a free statutory benefit.',
+    resultId: 'VER-2026-SUSPICIOUS'
   },
   {
     id: 'hist-3',
@@ -222,9 +300,11 @@ export const MOCK_HISTORY_ITEMS: HistoryItem[] = [
     riskTier: 'LOW',
     riskScore: 4,
     confidenceScore: 99,
-    status: 'SAFE',
+    status: 'TRUSTED',
     method: 'DOCUMENT',
-    flagCount: 0
+    flagCount: 0,
+    summary: 'Direct benefit transfer guidelines match official gazette release with zero fees.',
+    resultId: 'VER-2026-TRUSTED'
   },
   {
     id: 'hist-4',
@@ -234,9 +314,11 @@ export const MOCK_HISTORY_ITEMS: HistoryItem[] = [
     riskTier: 'CRITICAL',
     riskScore: 96,
     confidenceScore: 97,
-    status: 'FAKE',
+    status: 'HIGH RISK',
     method: 'TEXT',
-    flagCount: 4
+    flagCount: 4,
+    summary: 'Malicious phishing form collecting minor Aadhaar details with false grant promises.',
+    resultId: 'VER-2026-HIGH-RISK'
   },
   {
     id: 'hist-5',
@@ -246,8 +328,24 @@ export const MOCK_HISTORY_ITEMS: HistoryItem[] = [
     riskTier: 'LOW',
     riskScore: 2,
     confidenceScore: 100,
-    status: 'SAFE',
+    status: 'TRUSTED',
     method: 'DOCUMENT',
-    flagCount: 0
+    flagCount: 0,
+    summary: 'Postal circular matches verified National Savings Institute notification.',
+    resultId: 'VER-2026-TRUSTED'
+  },
+  {
+    id: 'hist-6',
+    schemeName: 'State Solar Rooftop Regional Subsidy Pilot',
+    inputExcerpt: 'Additional ₹15,000 municipal grant on 3kW rooftop solar installations via local DISCOM...',
+    verifiedAt: '5 days ago',
+    riskTier: 'MODERATE',
+    riskScore: 42,
+    confidenceScore: 72,
+    status: 'NEEDS REVIEW',
+    method: 'FORM',
+    flagCount: 1,
+    summary: 'Regional municipal pilot built on PM Surya Ghar framework. Verify with local subdivision.',
+    resultId: 'VER-2026-NEEDS-REVIEW'
   }
 ];

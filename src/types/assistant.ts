@@ -14,6 +14,8 @@ export interface ChatMessage {
   }[];
 }
 
+export type AssistantMessage = ChatMessage;
+
 export interface PromptSuggestion {
   id: string;
   category: string;
