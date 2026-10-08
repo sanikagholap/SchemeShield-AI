@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <defs>
+    <linearGradient id="shieldGrad" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E3A8A"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="12" y1="10" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Shield -->
+  <path d="M24 4L8 10V22C8 32.5 14.8 41.8 24 44C33.2 41.8 40 32.5 40 22V10L24 4Z" fill="url(#shieldGrad)"/>
+  <!-- Inner Shield Core -->
+  <path d="M24 8L12 12.5V22C12 30 17.1 37.3 24 39.2C30.9 37.3 36 30 36 22V12.5L24 8Z" fill="#0B132B" opacity="0.4"/>
+  <!-- AI Circuit Nodes -->
+  <circle cx="24" cy="18" r="2.5" fill="#38BDF8"/>
+  <circle cx="17" cy="26" r="2" fill="#10B981"/>
+  <circle cx="31" cy="26" r="2" fill="#10B981"/>
+  <path d="M24 18L17 26M24 18L31 26M17 26H31" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+  <!-- Verification Checkmark / Core Node -->
+  <path d="M20 28L23 31L28 25" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
