@@ -141,14 +141,28 @@ export const verificationService = {
   },
 
   /**
-   * Backward-compatibility wrapper for document verification.
+   * Upload and analyze a scheme document file
    */
-  async verifySchemeDocument(file: File, schemeName?: string): Promise<VerificationResult> {
+  async uploadDocument(file: File, schemeName?: string): Promise<VerificationResult> {
     return this.analyzeScheme({
       schemeName,
       documentFile: file,
       method: 'DOCUMENT'
     });
+  },
+
+  /**
+   * Standardized alias for retrieving verification result
+   */
+  async getVerificationResult(id: string): Promise<VerificationResult | null> {
+    return this.getVerificationById(id);
+  },
+
+  /**
+   * Backward-compatibility wrapper for document verification.
+   */
+  async verifySchemeDocument(file: File, schemeName?: string): Promise<VerificationResult> {
+    return this.uploadDocument(file, schemeName);
   },
 
   /**

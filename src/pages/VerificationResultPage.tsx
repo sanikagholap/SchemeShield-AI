@@ -23,6 +23,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PageContainer } from '../components/ui/PageContainer';
 import { VerificationResult, SimilarScheme } from '../types/verification';
+import { useToast } from '../hooks/useToast';
 import {
   TRUSTED_MOCK_RESULT,
   SUSPICIOUS_MOCK_RESULT,
@@ -33,6 +34,7 @@ import {
 export const VerificationResultPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Initialize from location state if passed, else default to HIGH_RISK or TRUSTED
   const initialResult: VerificationResult = location.state?.result || HIGH_RISK_MOCK_RESULT;
@@ -46,6 +48,7 @@ export const VerificationResultPage: React.FC = () => {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
+    toast.success(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 

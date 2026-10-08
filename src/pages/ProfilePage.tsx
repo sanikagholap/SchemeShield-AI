@@ -23,10 +23,12 @@ import { PageContainer } from '../components/ui/PageContainer';
 import { profileService } from '../services/profileService';
 import { UserProfile, UserPreferences } from '../types/profile';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const toast = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'security'>('profile');
@@ -57,8 +59,15 @@ export const ProfilePage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToastMessage(msg);
+    if (type === 'error') {
+      toast.error(msg);
+    } else if (type === 'warning') {
+      toast.warning(msg);
+    } else {
+      toast.success(msg);
+    }
     setTimeout(() => setToastMessage(null), 3000);
   };
 

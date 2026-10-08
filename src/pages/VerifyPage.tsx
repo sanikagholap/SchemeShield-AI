@@ -23,10 +23,12 @@ import { Card } from '../components/ui/Card';
 import { PageContainer } from '../components/ui/PageContainer';
 import { verificationService } from '../services/verificationService';
 import { VerificationRequest, VerificationResult } from '../types/verification';
+import { useToast } from '../hooks/useToast';
 
 export const VerifyPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Active Input Mode: 'FORM' | 'DOCUMENT'
   const [activeTab, setActiveTab] = useState<'FORM' | 'DOCUMENT'>('FORM');
@@ -204,6 +206,7 @@ export const VerifyPage: React.FC = () => {
       const analyzedResult: VerificationResult = await verificationService.analyzeScheme(verificationPayload);
 
       setIsAnalyzing(false);
+      toast.success('Verification analysis completed.');
       navigate('/verification-result', { state: { result: analyzedResult } });
     };
 

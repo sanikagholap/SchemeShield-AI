@@ -14,9 +14,11 @@ import { PageContainer } from '../components/ui/PageContainer';
 import { historyService } from '../services/historyService';
 import { verificationService } from '../services/verificationService';
 import { HistoryItem } from '../types/history';
+import { useToast } from '../hooks/useToast';
 
 export const HistoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,6 +60,7 @@ export const HistoryPage: React.FC = () => {
     e.stopPropagation();
     await historyService.deleteHistoryItem(id);
     setItems((prev) => prev.filter((i) => i.id !== id));
+    toast.info('Verification record removed from audit history.');
   };
 
   const handleViewResult = async (item: HistoryItem) => {

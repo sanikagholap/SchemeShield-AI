@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ExternalLink, AlertCircle, Sparkles } from 'lucide-react';
+import { ExternalLink, AlertCircle, Sparkles } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 
 export const Footer: React.FC = () => {
@@ -149,8 +149,8 @@ export const Footer: React.FC = () => {
         >
           <AlertCircle size={20} color="#fbbf24" style={{ flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: 'var(--text-xs)', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
-            <strong style={{ color: '#f1f5f9' }}>Independent Project Statement: </strong>
-            SchemeShield AI is an independent technology prototype and is not an official government website. It is not affiliated with, authorized by, or endorsed by the Government of India or any state government. Verification results, threat indices, and confidence metrics are algorithmic evaluations designed to assist citizens in identifying potential fraud. Always confirm critical scheme requirements directly with official government gazettes.
+            <strong style={{ color: '#f1f5f9' }}>Independent Platform Notice: </strong>
+            SchemeShield AI is an independent verification platform and is not an official government website. It is not affiliated with, authorized by, or endorsed by the Government of India or any state government. Verification results, threat indices, and confidence metrics are algorithmic evaluations designed to assist citizens in identifying potential fraud. Always confirm critical scheme requirements directly with official government gazettes.
           </p>
         </div>
 

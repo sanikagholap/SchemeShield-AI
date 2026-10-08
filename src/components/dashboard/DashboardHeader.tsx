@@ -5,7 +5,6 @@ import {
   User as UserIcon,
   LogOut,
   ShieldCheck,
-  Check,
   Menu,
   ExternalLink,
   ChevronDown
@@ -99,6 +98,26 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleSideba
 
       {/* Right: Date, Notifications, User Menu */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        {/* Demo Mode Pill */}
+        <div
+          style={{
+            fontSize: 'var(--text-xs)',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--bg-surface-secondary)',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-full)',
+            fontWeight: 600,
+            border: '1px solid var(--border-subtle)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          title="Operating in frontend demo mode with simulated AI models and centralized mock data."
+        >
+          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+          <span>Demo Mode</span>
+        </div>
+
         {/* Date pill (hidden on small mobile) */}
         <div
           className="header-date-pill"

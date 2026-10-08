@@ -4,7 +4,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   ArrowRight,
-  FileSearch,
   ScanLine,
   Database,
   BarChart3,
@@ -15,11 +14,7 @@ import {
   Search,
   ExternalLink,
   Sparkles,
-  ChevronRight,
   Brain,
-  Globe,
-  FileText,
-  Copy,
   Lock,
   Layers,
   Info
@@ -350,6 +345,28 @@ export const LandingPage: React.FC = () => {
                   <CheckCircle2 size={16} color="var(--color-verified)" />
                   <span>Authentic .gov.in Cross-Referencing</span>
                 </div>
+              </div>
+
+              {/* Public Platform Notice */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.04)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '11px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.4,
+                  maxWidth: '540px'
+                }}
+              >
+                <Info size={14} color="var(--color-primary)" style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Public Notice:</strong> SchemeShield AI is an independent verification platform and is not an official government website.
+                </span>
               </div>
             </div>
 

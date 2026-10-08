@@ -20,9 +20,11 @@ import { Card } from '../components/ui/Card';
 import { PageContainer } from '../components/ui/PageContainer';
 import { schemeService } from '../services/schemeService';
 import { GovernmentScheme } from '../types/scheme';
+import { useToast } from '../hooks/useToast';
 
 export const SchemesPage: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [schemes, setSchemes] = useState<GovernmentScheme[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -57,6 +59,7 @@ export const SchemesPage: React.FC = () => {
     setSelectedCategory('All');
     setSelectedRisk('All');
     setSortBy('recent');
+    toast.info('Filters cleared.');
   };
 
   const hasActiveFilters = searchQuery !== '' || selectedCategory !== 'All' || selectedRisk !== 'All' || sortBy !== 'recent';

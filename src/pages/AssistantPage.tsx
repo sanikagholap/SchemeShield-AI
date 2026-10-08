@@ -17,8 +17,10 @@ import { Card } from '../components/ui/Card';
 import { PageContainer } from '../components/ui/PageContainer';
 import { assistantService } from '../services/assistantService';
 import { ChatMessage, PromptSuggestion } from '../types/assistant';
+import { useToast } from '../hooks/useToast';
 
 export const AssistantPage: React.FC = () => {
+  const toast = useToast();
   const initialWelcomeMessage: ChatMessage = {
     id: 'msg-welcome',
     sender: 'assistant',
@@ -86,11 +88,13 @@ Select one of the suggested topics below or ask any question in plain language.`
 
   const handleClearChat = () => {
     setMessages([initialWelcomeMessage]);
+    toast.info('Conversation cleared.');
   };
 
   const handleCopyMessage = (content: string, id: string) => {
     navigator.clipboard?.writeText(content);
     setCopiedId(id);
+    toast.success('Guidance copied to clipboard.');
     setTimeout(() => setCopiedId(null), 2000);
   };
 

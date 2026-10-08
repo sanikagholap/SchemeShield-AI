@@ -42,3 +42,10 @@ export interface AuthContextType {
   logout: () => void;
   loginAsDemo: (role?: 'CITIZEN' | 'VERIFIER') => void;
 }
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  refreshToken?: string;
+  expiresIn?: number;
+}

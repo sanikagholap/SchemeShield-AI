@@ -151,6 +151,26 @@ export const Navbar: React.FC = () => {
           }}
           className="desktop-actions"
         >
+          {/* Demo Mode Badge */}
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              backgroundColor: 'var(--bg-surface-secondary)',
+              color: 'var(--text-secondary)',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: '1px solid var(--border-subtle)'
+            }}
+            title="SchemeShield AI is operating in frontend demo mode with localized mock services."
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+            Demo Mode
+          </span>
+
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               {/* Notification Button */}
@@ -496,7 +516,15 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: 'var(--space-2) 0' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-4)', backgroundColor: 'var(--bg-surface-secondary)', borderRadius: 'var(--radius-md)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>System State:</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+              Demo Mode
+            </span>
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: 'var(--space-1) 0' }} />
 
           {user ? (
             <Button
