@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -7,24 +7,35 @@ import {
   MessageSquare,
   History,
   User,
-  ExternalLink,
-  ShieldAlert
+  LogOut,
+  ShieldAlert,
+  X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
+import { useAuth } from '../../hooks/useAuth';
 
 export interface SidebarProps {
-  isCollapsed?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = () => {
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   const menuItems = [
-    { label: 'Overview', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
+    { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
     { label: 'Verify Scheme', path: '/verify', icon: <ShieldCheck size={18} /> },
     { label: 'Explore Schemes', path: '/schemes', icon: <FileSearch size={18} /> },
     { label: 'AI Assistant', path: '/assistant', icon: <MessageSquare size={18} /> },
     { label: 'Verification History', path: '/history', icon: <History size={18} /> },
-    { label: 'Citizen Profile', path: '/profile', icon: <User size={18} /> }
+    { label: 'Profile', path: '/profile', icon: <User size={18} /> }
   ];
+
+  const handleLogout = () => {
+    logout();
+    if (onClose) onClose();
+    navigate('/login');
+  };
 
   return (
     <aside
@@ -44,13 +55,25 @@ export const Sidebar: React.FC<SidebarProps> = () => {
       {/* Sidebar Header */}
       <div
         style={{
-          padding: 'var(--space-5) var(--space-6)',
+          padding: 'var(--space-4) var(--space-5)',
           borderBottom: '1px solid var(--border-light)',
           display: 'flex',
-          alignItems: 'center'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 'var(--navbar-height)'
         }}
       >
         <BrandLogo showTagline={false} size="sm" />
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="mobile-close-btn"
+            style={{ padding: '4px', color: 'var(--text-tertiary)', borderRadius: 'var(--radius-sm)' }}
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Nav Menu Items */}
@@ -65,13 +88,14 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         }}
       >
         <div style={{ padding: '0 var(--space-3) var(--space-2)', fontSize: '11px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Verification Hub
+          Platform Navigation
         </div>
 
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={() => { if (onClose) onClose(); }}
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
@@ -103,51 +127,71 @@ export const Sidebar: React.FC<SidebarProps> = () => {
             borderRadius: 'var(--radius-lg)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-fake-text)', fontWeight: 700, fontSize: 'var(--text-xs)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-fake-text)', fontWeight: 700, fontSize: '11px' }}>
             <ShieldAlert size={14} />
-            <span>Active Scam Wave</span>
+            <span>Active Phishing Wave</span>
           </div>
           <p style={{ fontSize: '11px', color: 'var(--color-fake-text)', marginTop: '4px', marginBottom: 0, lineHeight: 1.4 }}>
-            PM Free Tractor Scheme 2026 phishing links circulating on WhatsApp.
+            "PM Free Tractor Scheme" soliciting ₹499 via UPI. PIB Fact Check confirmed fraudulent.
           </p>
         </div>
       </nav>
 
-      {/* Sidebar Footer / User Profile preview */}
+      {/* Sidebar Footer / User Profile & Logout */}
       <div
         style={{
-          padding: 'var(--space-4) var(--space-5)',
+          padding: 'var(--space-3) var(--space-4)',
           borderTop: '1px solid var(--border-light)',
           backgroundColor: 'var(--bg-surface-secondary)',
           display: 'flex',
           alignItems: 'center',
-          gap: 'var(--space-3)'
+          justifyContent: 'space-between',
+          gap: 'var(--space-2)'
         }}
       >
-        <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', overflow: 'hidden' }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-primary)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '11px',
+              flexShrink: 0
+            }}
+          >
+            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AS'}
+          </div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {user?.name || 'Citizen User'}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              {user?.role === 'VERIFIER' ? 'Civic Verifier' : 'Verified Citizen'}
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleLogout}
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: '50%',
-            backgroundColor: 'var(--color-primary)',
-            color: '#ffffff',
+            padding: '6px',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-tertiary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: 'var(--text-xs)'
+            cursor: 'pointer'
           }}
+          title="Sign Out"
         >
-          AS
-        </div>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-            Aarav Sharma
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-            Citizen Verifier
-          </div>
-        </div>
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { ProtectedRoute } from './ProtectedRoute';
 import {
   LandingPage,
   LoginPage,
@@ -39,24 +40,22 @@ export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        {/* Public & Landing */}
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        
-        {/* Scheme Verification Core */}
-        <Route path="/verify" element={<VerifyPage />} />
-        <Route path="/verification-result" element={<VerificationResultPage />} />
-        <Route path="/schemes" element={<SchemesPage />} />
-        <Route path="/assistant" element={<AssistantPage />} />
-
-        {/* Dashboard & Citizen Workbench */}
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/history" element={<HistoryPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-
-        {/* Authentication */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* Protected Routes (Protected by Auth State) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/verification-result" element={<VerificationResultPage />} />
+          <Route path="/schemes" element={<SchemesPage />} />
+          <Route path="/assistant" element={<AssistantPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
 
         {/* Catch-all */}
         <Route path="/404" element={<NotFoundPage />} />

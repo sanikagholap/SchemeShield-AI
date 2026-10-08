@@ -7,10 +7,20 @@ import { Sidebar } from './Sidebar';
 export const AppLayout: React.FC = () => {
   const location = useLocation();
 
-  // Pages that benefit from full dashboard layout with persistent sidebar
-  const isDashboardArea = ['/dashboard', '/history', '/profile'].includes(location.pathname);
+  const isDashboardRoot = location.pathname === '/dashboard';
+  const isWorkbenchSection = ['/history', '/profile'].includes(location.pathname);
   const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(location.pathname);
 
+  // Dashboard has its own dedicated full-height sidebar and header
+  if (isDashboardRoot) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
+        <Outlet />
+      </div>
+    );
+  }
+
+  // Auth pages (login, signup, forgot password)
   if (isAuthPage) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
@@ -23,7 +33,8 @@ export const AppLayout: React.FC = () => {
     );
   }
 
-  if (isDashboardArea) {
+  // Workbench areas like /history and /profile
+  if (isWorkbenchSection) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', backgroundColor: 'var(--bg-app)' }}>
         <div className="hidden-mobile" style={{ display: 'none' }}>
@@ -45,6 +56,7 @@ export const AppLayout: React.FC = () => {
     );
   }
 
+  // Public / Standard Pages (Landing, Verify, Schemes, Assistant)
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-app)' }}>
       <Navbar />
