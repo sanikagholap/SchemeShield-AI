@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert, ShieldCheck, HelpCircle } from 'lucide-react';
 import { VerificationStatus } from '../../types/verification';
 
 export interface StatusIndicatorProps {
@@ -23,6 +23,12 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     icon: React.ReactNode;
     description: string;
   }> = {
+    TRUSTED: {
+      label: 'Trusted / Authentic',
+      variantClass: 'badge-verified',
+      icon: <ShieldCheck size={iconSize} />,
+      description: 'Matches official government records and zero fees demanded'
+    },
     SAFE: {
       label: 'Verified Authentic',
       variantClass: 'badge-verified',
@@ -34,6 +40,18 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
       variantClass: 'badge-suspicious',
       icon: <AlertTriangle size={iconSize} />,
       description: 'Contains altered terms or unverifiable claims'
+    },
+    'HIGH RISK': {
+      label: 'High Risk / Severe Threat',
+      variantClass: 'badge-fake',
+      icon: <XCircle size={iconSize} />,
+      description: 'Critical fraud signals or deceptive clone pattern detected'
+    },
+    'NEEDS REVIEW': {
+      label: 'Needs Review',
+      variantClass: 'badge-info',
+      icon: <HelpCircle size={iconSize} />,
+      description: 'Regional pilot or newly notified announcement requiring manual validation'
     },
     FAKE: {
       label: 'Confirmed Fake / Scam',

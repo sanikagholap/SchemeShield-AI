@@ -3,6 +3,7 @@ import React, { InputHTMLAttributes, forwardRef } from 'react';
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   hint?: string;
+  helperText?: string;
   error?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -11,6 +12,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
   label,
   hint,
+  helperText,
   error,
   leftIcon,
   rightIcon,
@@ -19,6 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   ...props
 }, ref) => {
   const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+  const displayHint = helperText || hint;
 
   return (
     <div className="form-group">
@@ -38,7 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         />
         {rightIcon && <span style={{ position: 'absolute', right: '0.875rem' }}>{rightIcon}</span>}
       </div>
-      {hint && !error && <span className="form-hint">{hint}</span>}
+      {displayHint && !error && <span className="form-hint">{displayHint}</span>}
       {error && <span className="form-error" role="alert">{error}</span>}
     </div>
   );

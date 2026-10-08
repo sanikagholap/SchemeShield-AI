@@ -3,6 +3,7 @@ import React, { TextareaHTMLAttributes, forwardRef } from 'react';
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   hint?: string;
+  helperText?: string;
   error?: string;
   showCount?: boolean;
   currentCount?: number;
@@ -11,6 +12,7 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
   label,
   hint,
+  helperText,
   error,
   showCount,
   currentCount,
@@ -20,6 +22,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
   ...props
 }, ref) => {
   const textareaId = id || (label ? `textarea-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+  const displayHint = helperText || hint;
 
   return (
     <div className="form-group">
@@ -43,7 +46,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({
         aria-invalid={!!error}
         {...props}
       />
-      {hint && !error && <span className="form-hint">{hint}</span>}
+      {displayHint && !error && <span className="form-hint">{displayHint}</span>}
       {error && <span className="form-error" role="alert">{error}</span>}
     </div>
   );
