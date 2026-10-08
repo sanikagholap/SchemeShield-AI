@@ -487,16 +487,116 @@ Citizens can submit suspicious schemes, social media messages, or flyers for mul
 - **Authentication:** Required (`Authorization: Bearer <access_token>`)
 - **Security:** Strict data isolation enforced. Users can only access their own verification records (`403 Forbidden` if accessed by another user).
 
-### 5. Get Verification Audit History
+### 4. Get Single Verification Request
+- **Endpoint:** `GET /api/v1/verify/{verification_id}`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Security:** Strict data isolation enforced. Users can only access their own verification records (`403 Forbidden` if accessed by another user).
+
+### 5. Get Verification Audit History (Filtered & Paginated)
 - **Endpoint:** `GET /api/v1/verify/history`
 - **Authentication:** Required (`Authorization: Bearer <access_token>`)
 - **Query Parameters:**
-  - `page` *(int, default: 1)*
-  - `page_size` *(int, default: 20)*
-- **Response:** Paginated list of user's own verification requests sorted newest first (includes text, document, and URL submissions).
+  - `page` *(int, default: 1)*: 1-indexed page number.
+  - `page_size` *(int, default: 20, max: 100)*: Items per page.
+  - `result_label` *(string, optional)*: Filter by verdict label (`genuine`, `suspicious`, `duplicate`, `potentially_fake`, `unable_to_verify`).
+  - `status` *(string, optional)*: Filter by processing status (`completed`, `pending`, `failed`).
+- **Response:** Paginated list of lightweight `VerificationHistoryItem` summaries (omits heavy raw text blobs for fast list rendering).
+
+### 6. Get Citizen Verification Statistics
+- **Endpoint:** `GET /api/v1/verify/stats`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Security:** Strict tenant isolation (only aggregates data belonging to the authenticated user).
+- **Response (`VerificationStatsResponse`):**
+  ```json
+  {
+    "total_verifications": 12,
+    "completed_verifications": 12,
+    "pending_verifications": 0,
+    "failed_verifications": 0,
+    "genuine_count": 6,
+    "suspicious_count": 2,
+    "duplicate_count": 1,
+    "potentially_fake_count": 2,
+    "unable_to_verify_count": 1,
+    "average_risk_score": 38.5
+  }
+  ```
+  *(Returns safe zero-values if user has zero submissions).*
 
 ---
 
+## 👤 Citizen User Profile Endpoint (`/api/v1/users/me`)
+
+- **Endpoint:** `GET /api/v1/users/me`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Purpose:** Secure profile retrieval for user dashboards and navigation headers.
+- **Security Guarantee:** Never exposes internal database secrets, password hashes, or sensitive credentials.
+- **Response (`UserResponse`):**
+  ```json
+  {
+    "id": 1,
+    "email": "citizen@example.com",
+    "full_name": "Aarav Sharma",
+    "is_active": true,
+    "is_admin": false,
+    "created_at": "2026-10-08T11:00:00Z"
+  }
+  ```
+
+---
+
+## 🤖 Local Rule-Based AI Assistant (`POST /api/v1/assistant/chat`)
+
+SchemeShield AI includes a **100% local, zero-cost knowledge assistant** focused exclusively on government scheme verification education, risk literacy, and fraud awareness.
+
+> [!IMPORTANT]
+> **₹0 Local Architecture Guarantee:**
+> - Runs completely on local deterministic rules and keyword-indexed domain knowledge.
+> - **NO external generative AI APIs (No OpenAI, No Gemini, No Claude, No paid inference).**
+> - Does NOT pretend to be an unconstrained generative chatbot.
+
+### Supported Citizen Topics:
+1. **How to Verify:** Step-by-step guidance on submitting scheme names, URLs, or documents.
+2. **Risk Score Literacy:** Meaning of the 0–100 scale, scoring factors, and thresholds.
+3. **Confidence Score Literacy:** Evidence quantity vs. risk assessment differentiation.
+4. **Duplicate Scheme Guidance:** How variant claims and clone portals are detected.
+5. **Suspicious Indicators:** Breakdown of common red flags and artificial urgency tactics.
+6. **Government Domain Authority:** Why `.gov.in` and `.nic.in` domains provide verified provenance.
+7. **OTP & Credential Defense:** Urgent instructions never to share OTPs, ATM PINs, or passwords.
+8. **Upfront Fee Warnings:** Explanation of advance-fee fraud in fake welfare schemes.
+9. **OCR Document Verification:** How text extraction works for flyers and newspaper clippings.
+10. **Allowed Document Formats:** Accepted extensions (`.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.txt`).
+11. **"Unable to Verify" Guidance:** What citizens should do when evidence is inconclusive.
+
+### Assistant Safety & Anti-Fraud Guardrails:
+- **Zero Credential Solicitations:** Assistant never asks citizens for passwords, OTPs, UPI PINs, or bank details.
+- **Safety Intervention:** When citizen messages mention OTPs, bank accounts, or fees, the assistant immediately triggers an emphatic fraud warning.
+- **No Government Affiliation Claim:** Clearly states SchemeShield is an independent verification platform.
+- **No Absolute Guarantees:** Emphasizes that citizens must verify with official portals before acting.
+
+### API Specification:
+- **Endpoint:** `POST /api/v1/assistant/chat`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Request:**
+  ```json
+  {
+    "message": "How can I check whether a government scheme is genuine?"
+  }
+  ```
+- **Response (`AssistantChatResponse`):**
+  ```json
+  {
+    "response": "To verify a government scheme on SchemeShield AI:\n1. Use Text Verification...",
+    "suggestions": [
+      "What does the risk score mean?",
+      "Why is a .gov.in domain useful?",
+      "What documents can I upload?"
+    ],
+    "timestamp": "2026-10-08T12:00:00Z"
+  }
+  ```
+
+---
 
 ## 🧪 Running Automated Tests
 
@@ -510,84 +610,55 @@ $env:PYTHONPATH="backend"; pytest backend/tests -v
 PYTHONPATH=backend pytest backend/tests -v
 ```
 
-### Test Coverage (36 Automated Tests):
+### Complete Test Coverage (86 Automated Tests):
+- ✅ **Final Integration & Polish Suite (`test_final_integration.py` - 12 Tests):**
+  1. `test_user_profile_authenticated` — Profile endpoint returns safe fields; no hash leakage.
+  2. `test_user_profile_unauthenticated` — 401 Unauthorized for unauthenticated profile requests.
+  3. `test_verification_history_filters_and_payload_structure` — Filtering history by verdict label and status.
+  4. `test_verification_stats_empty_user` — Safe zero-value defaults for users with no history.
+  5. `test_verification_stats_calculation_and_isolation` — Accurate metric calculation and strict user data isolation.
+  6. `test_verification_stats_unauthenticated` — 401 Unauthorized check for stats endpoint.
+  7. `test_assistant_chat_supported_questions` — Accurate answers across all 11 core verification topics.
+  8. `test_assistant_chat_safety_on_credential_theft_query` — Emphatic fraud warning on OTP/credential queries.
+  9. `test_assistant_chat_unsupported_question_fallback` — Graceful fallback to verification tool guidance.
+  10. `test_assistant_chat_validation_and_unauthenticated` — Input length validation and auth enforcement.
+  11. `test_openapi_and_docs_endpoints` — OpenAPI schema and Swagger documentation validity.
+  12. `test_complete_citizen_verification_lifecycle_e2e` — Complete end-to-end citizen verification journey.
 - ✅ **Authentication Suite (`test_auth.py` - 13 Tests):**
-  1. `test_successful_registration` — Valid citizen registration and safe response fields.
-  2. `test_duplicate_email_registration` — Rejection of duplicate email with 409 Conflict.
-  3. `test_invalid_email_registration` — Rejection of invalid email patterns with 422.
-  4. `test_password_length_validation` — Rejection of passwords < 8 characters with 422.
-  5. `test_successful_login` — Credential validation and JWT Bearer token generation.
-  6. `test_login_incorrect_password` — Generic 401 response on wrong password.
-  7. `test_login_nonexistent_email` — Generic 401 response on unknown email (prevents enumeration).
-  8. `test_current_user_valid_token` — Retrieval of user profile using valid JWT.
-  9. `test_current_user_without_token` — 401 response when token header is omitted.
-  10. `test_current_user_invalid_token` — 401 response on forged or malformed token.
-  11. `test_current_user_expired_token` — 401 response when token expiration is exceeded.
-  12. `test_inactive_user_blocked` — 403 Forbidden for deactivated accounts.
-  13. `test_logout_endpoint` — Validates authenticated session termination.
+  13–25. Registration, duplicate email rejection, login, bcrypt verification, token expiration, profile lookup, and account isolation.
 - ✅ **Scheme Management Suite (`test_schemes.py` - 9 Tests):**
-  14. `test_scheme_listing_public` — Public retrieval of schemes.
-  15. `test_create_scheme_authenticated` — Scheme creation with auth token.
-  16. `test_create_scheme_unauthenticated` — 401 Unauthorized check.
-  17. `test_create_duplicate_scheme_name` — 409 Conflict check.
-  18. `test_get_scheme_by_id` — Retrieval of single scheme by ID.
-  19. `test_get_scheme_not_found` — 404 Not Found check.
-  20. `test_update_scheme` — Field updates via PATCH.
-  21. `test_delete_scheme` — Safe scheme deletion.
-  22. `test_scheme_filtering_and_search` — Filters for search, category, state, and department.
+  26–34. Public catalog listing, authorized creation, duplicate prevention, updates, deletes, and multi-parameter filtering.
 - ✅ **Scheme Verification Suite (`test_verify.py` - 9 Tests):**
-  23. `test_submit_verification_request_authenticated` — Submitting verification request with 'pending' status.
-  24. `test_submit_verification_unauthenticated` — 401 Unauthorized check.
-  25. `test_submit_verification_invalid_input` — 422 input validation check.
-  26. `test_get_verification_by_id` — Citizen retrieving own verification record.
-  27. `test_get_verification_not_found` — 404 Not Found check.
-  28. `test_user_cannot_access_another_users_verification` — 403 Forbidden cross-user data isolation.
-  29. `test_get_verification_history` — Paginated user verification history (newest first).
-  30. `test_verification_history_unauthenticated` — 401 Unauthorized check.
-  31. `test_official_source_domain_evaluation` — Official domain trust analysis (.gov.in, .nic.in, myscheme.gov.in).
+  35–43. Text verification submission, single lookup, cross-user forbidden isolation, paginated history, and domain trust analysis.
+- ✅ **Document & OCR Verification Suite (`test_document_and_url.py` - 18 Tests):**
+  44–61. Multipart uploads, PDF text extraction, OCR image mocks, SSRF blocking, dangerous schemes, and URL text extraction.
+- ✅ **AI Engine & NLP Suite (`test_ai_engine.py` - 20 Tests):**
+  62–81. Normalization, tokenization, TF-IDF vectorizer, duplicate detection, scam heuristic rules, and risk scoring.
 - ✅ **Health Suite (`test_health.py` - 1 Test):**
-  32. `test_health_check_endpoint` — Validates GET /api/health and SQLite connectivity.
-- ✅ **Database Suite (`test_database.py` - 3 Tests):**
-  33. `test_database_connection_live` — Verifies engine connectivity.
-  34. `test_database_tables_initialized` — Verifies all 9 database tables are created.
-  35. `test_database_session_dependency` — Verifies get_db session lifecycle.
+  82. Live SQLite connectivity and health reporting.
+- ✅ **Database & Session Suite (`test_database.py` - 3 Tests):**
+  83–85. Engine connectivity, schema initialization, and session dependency lifecycles.
 - ✅ **Startup Suite (`test_startup.py` - 1 Test):**
-  36. `test_application_startup` — Verifies FastAPI startup, Swagger `/docs`, and route mounting.
+  86. FastAPI factory startup and route compilation.
 
 ---
 
-## 🎯 Current Backend Scope & Roadmap
+## 🎯 Final Backend Architecture Status
 
-### Completed in Milestones 1, 2, 3, 4, & 5:
-- [x] Production-grade modular backend architecture.
-- [x] Zero-cost SQLite database integration with SQLAlchemy 2.0 ORM.
-- [x] User model with `password_hash` column and unique email constraint.
-- [x] Full JWT Authentication system (`register`, `login`, `me`, `logout`).
-- [x] **Government Scheme Storage & Management (`/api/v1/schemes`):**
-  - [x] Full CRUD operations with authentication on modifications.
-  - [x] Multi-parameter filtering (keyword search, category, state, department, is_active).
-  - [x] Standardized pagination metadata.
-- [x] **Local AI & NLP Verification Engine (`/api/v1/verify`):**
-  - [x] Deterministic local text normalization (Unicode NFKD, HTML unescaping, punctuation cleaning, tokenization, stop-words, acronym expansion).
-  - [x] Local TF-IDF Vectorization & Cosine Similarity duplicate detection engine.
-  - [x] Rule-based suspicious pattern & scam heuristic detector (credential theft, advance fees, artificial urgency, unrealistic promises, unofficial channels).
-  - [x] Multi-factor official domain trust validation with nuanced explanation.
-  - [x] Bounded risk scoring (0–100) and evidence confidence scoring (0–100).
-  - [x] Explainable citizen verdict labeling (`genuine`, `suspicious`, `duplicate`, `potentially_fake`, `unable_to_verify`).
-  - [x] Structured evidence JSON audit trails.
-  - [x] Synchronous local processing with safe error handling.
-- [x] **Document & Image OCR Verification (`/api/v1/verify/document`):**
-  - [x] Multipart upload handling for PDF, PNG, JPG/JPEG, WEBP, and TXT files.
-  - [x] Local text extraction via `pypdf` (embedded digital text) and local `pytesseract` + `Pillow` (scanned flyers).
-  - [x] Enforced file size limits (`MAX_UPLOAD_SIZE_MB`, default 10MB) and extension safety.
-  - [x] Automatic cleanup of temporary upload artifacts (zero disk pollution).
-  - [x] Structured OCR metadata generation (`extraction_method`, `page_count`, `text_length`, `warnings`).
-- [x] **Safe Web URL Verification (`/api/v1/verify/url`):**
-  - [x] Strict URL scheme validation (`http`/`https`), rejecting dangerous protocols (`javascript:`, `file:`, `data:`, `ftp:`).
-  - [x] SSRF guard blocking private, loopback, and link-local IP addresses.
-  - [x] Safe HTML text extraction via `BeautifulSoup` with size (1MB) and timeout (5.0s) guards.
-  - [x] Seamless feeding of extracted text into existing verification engine.
-- [x] **74 comprehensive automated tests passing with 100% success rate.**
+### Completed Across Milestones 1 – 6:
+- [x] **Milestone 1:** FastAPI foundation, SQLite + SQLAlchemy 2.0 ORM, 12-factor configuration, CORS, versioned routing (`/api/v1`), health endpoint.
+- [x] **Milestone 2:** User authentication system (bcrypt salted passwords, PyJWT HMAC-SHA256 tokens, `/api/v1/auth/me`).
+- [x] **Milestone 3:** Scheme catalog CRUD, filtering, search, VerificationRequest tracking, and official source domain service.
+- [x] **Milestone 4:** Local NLP engine, pure-Python TF-IDF vectorizer, Cosine Similarity duplicate detector, heuristic scam scanner, explainable risk/confidence scoring.
+- [x] **Milestone 5:** Multipart document upload, PDF text parsing (`pypdf`), local OCR (`pytesseract`), SSRF-guarded URL inspection (`httpx`, `BeautifulSoup`).
+- [x] **Milestone 6 (Final):**
+  - [x] Filterable verification history (`GET /api/v1/verify/history` with `result_label` and `status` query filters).
+  - [x] Citizen verification statistics endpoint (`GET /api/v1/verify/stats`) with zero defaults and strict tenant isolation.
+  - [x] Citizen user profile endpoint (`GET /api/v1/users/me`) with safe serialization.
+  - [x] Local AI Knowledge Assistant (`POST /api/v1/assistant/chat`) with anti-fraud safety guardrails and zero external API dependencies.
+  - [x] Hardened application-level limits (max text size, upload caps, message lengths).
+  - [x] 86 automated tests passing with 100% success rate.
+  - [x] Complete OpenAPI / Swagger interactive documentation at `/docs`.
 
 ---
 
@@ -734,7 +805,7 @@ Citizen Submission (Text, Document/Image, URL)
 ## ⚖️ Important Disclaimer
 
 > [!CAUTION]
-> **SchemeShield AI is an independent open-source / student academic engineering project.**
+> **SchemeShield AI is an independent educational/project platform. It is not an official Government of India website or service and does not itself certify government schemes.**
 > - SchemeShield AI is **NOT** affiliated with, endorsed by, certified by, or officially representative of the Government of India, the National Informatics Centre (NIC), Digital India, or any state ministry.
 > - Analysis results, risk scores, and verdicts produced by SchemeShield AI are heuristic evaluations generated for informational and awareness purposes only.
 > - Citizens are strongly advised to always consult authoritative government portals (such as [myScheme.gov.in](https://www.myscheme.gov.in), [india.gov.in](https://www.india.gov.in), or individual ministerial domains) before submitting applications or making financial decisions.

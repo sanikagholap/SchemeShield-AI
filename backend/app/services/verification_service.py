@@ -82,29 +82,78 @@ class VerificationService:
 
     @staticmethod
     def list_user_verifications(
-        db: Session, user_id: int, page: int = 1, page_size: int = 20
+        db: Session,
+        user_id: int,
+        page: int = 1,
+        page_size: int = 20,
+        result_label: Optional[str] = None,
+        status: Optional[str] = None,
     ) -> Tuple[List[VerificationRequest], int]:
         """
         Lists verification requests belonging to a user, paginated, newest first.
+        Supports optional filtering by result_label and status.
         """
         offset = (page - 1) * page_size
 
-        total_stmt = (
-            select(func.count(VerificationRequest.id))
-            .where(VerificationRequest.user_id == user_id)
+        total_stmt = select(func.count(VerificationRequest.id)).where(
+            VerificationRequest.user_id == user_id
         )
-        total = db.scalar(total_stmt) or 0
-
         items_stmt = (
             select(VerificationRequest)
             .where(VerificationRequest.user_id == user_id)
             .order_by(VerificationRequest.created_at.desc())
-            .offset(offset)
-            .limit(page_size)
         )
-        items = list(db.scalars(items_stmt).all())
+
+        if result_label and result_label.strip():
+            total_stmt = total_stmt.where(VerificationRequest.result_label == result_label.strip())
+            items_stmt = items_stmt.where(VerificationRequest.result_label == result_label.strip())
+
+        if status and status.strip():
+            total_stmt = total_stmt.where(VerificationRequest.status == status.strip())
+            items_stmt = items_stmt.where(VerificationRequest.status == status.strip())
+
+        total = db.scalar(total_stmt) or 0
+        items = list(db.scalars(items_stmt.offset(offset).limit(page_size)).all())
 
         return items, total
+
+    @staticmethod
+    def get_user_verification_stats(db: Session, user_id: int) -> Dict[str, Any]:
+        """
+        Computes summary statistics for an authenticated citizen's verifications.
+        Strictly isolated to user_id; returns safe zero values if no records exist.
+        """
+        stmt = select(VerificationRequest).where(VerificationRequest.user_id == user_id)
+        records = list(db.scalars(stmt).all())
+
+        total = len(records)
+        completed = sum(1 for r in records if r.status == "completed")
+        pending = sum(1 for r in records if r.status == "pending")
+        failed = sum(1 for r in records if r.status == "failed")
+
+        genuine = sum(1 for r in records if r.result_label == "genuine")
+        suspicious = sum(1 for r in records if r.result_label == "suspicious")
+        duplicate = sum(1 for r in records if r.result_label == "duplicate")
+        potentially_fake = sum(1 for r in records if r.result_label == "potentially_fake")
+        unable_to_verify = sum(1 for r in records if r.result_label == "unable_to_verify")
+
+        completed_risks = [
+            r.risk_score for r in records if r.risk_score is not None and r.status == "completed"
+        ]
+        avg_risk = round(sum(completed_risks) / len(completed_risks), 1) if completed_risks else None
+
+        return {
+            "total_verifications": total,
+            "completed_verifications": completed,
+            "pending_verifications": pending,
+            "failed_verifications": failed,
+            "genuine_count": genuine,
+            "suspicious_count": suspicious,
+            "duplicate_count": duplicate,
+            "potentially_fake_count": potentially_fake,
+            "unable_to_verify_count": unable_to_verify,
+            "average_risk_score": avg_risk,
+        }
 
     def process_verification(
         self,

@@ -12,9 +12,11 @@ from app.schemas.verification import (
     OCRMetadata,
     URLVerificationRequest,
     URLVerificationResponse,
+    VerificationHistoryItem,
     VerificationHistoryResponse,
     VerificationRequestCreate,
     VerificationResponse,
+    VerificationStatsResponse,
 )
 from app.services.ocr_service import ocr_processing_service
 from app.services.url_service import url_inspection_service
@@ -226,11 +228,13 @@ def verify_url(
     response_model=VerificationHistoryResponse,
     status_code=status.HTTP_200_OK,
     summary="Get authenticated citizen's verification audit history",
-    description="Returns a paginated list of all scheme verification requests submitted by the current user, sorted newest first.",
+    description="Returns a paginated list of all scheme verification requests submitted by the current user, sorted newest first with optional result_label and status filters.",
 )
 def get_verification_history(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    result_label: Optional[str] = Query(None, description="Filter by result label ('genuine', 'suspicious', 'duplicate', etc.)"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Filter by verification processing status ('completed', 'pending', 'failed')"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> VerificationHistoryResponse:
@@ -242,15 +246,37 @@ def get_verification_history(
         user_id=current_user.id,
         page=page,
         page_size=page_size,
+        result_label=result_label,
+        status=status_filter,
     )
     total_pages = math.ceil(total / page_size) if total > 0 else 1
 
     return VerificationHistoryResponse(
-        items=[VerificationResponse.model_validate(v) for v in items],
+        items=[VerificationHistoryItem.model_validate(v) for v in items],
         total=total,
         page=page,
         page_size=page_size,
         total_pages=total_pages,
+    )
+
+
+@router.get(
+    "/stats",
+    response_model=VerificationStatsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get authenticated citizen's verification summary statistics",
+    description="Aggregates completed, pending, failed counts and result label breakdown strictly for the authenticated user.",
+)
+def get_verification_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> VerificationStatsResponse:
+    """
+    Retrieves user-isolated verification metrics. Returns zero-values if user has no records.
+    """
+    return VerificationService.get_user_verification_stats(
+        db=db,
+        user_id=current_user.id,
     )
 
 

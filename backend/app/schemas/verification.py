@@ -54,13 +54,46 @@ class VerificationResponse(BaseModel):
     updated_at: datetime
 
 
+class VerificationHistoryItem(BaseModel):
+    """Lightweight summary of a citizen's verification request for fast list rendering."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    input_type: str
+    scheme_name: str
+    description: Optional[str] = None
+    submitted_url: Optional[str] = None
+    status: str
+    risk_score: Optional[float] = None
+    confidence_score: Optional[float] = None
+    result_label: Optional[str] = None
+    explanation: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class VerificationHistoryResponse(BaseModel):
     """Paginated user verification history."""
-    items: List[VerificationResponse]
+    items: List[VerificationHistoryItem]
     total: int
     page: int
     page_size: int
     total_pages: int
+
+
+class VerificationStatsResponse(BaseModel):
+    """Aggregated verification statistics for the authenticated citizen."""
+    total_verifications: int = 0
+    completed_verifications: int = 0
+    pending_verifications: int = 0
+    failed_verifications: int = 0
+    genuine_count: int = 0
+    suspicious_count: int = 0
+    duplicate_count: int = 0
+    potentially_fake_count: int = 0
+    unable_to_verify_count: int = 0
+    average_risk_score: Optional[float] = None
 
 
 class URLVerificationRequest(BaseModel):
