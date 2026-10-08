@@ -15,6 +15,7 @@ import {
 import { BrandLogo } from '../common/BrandLogo';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
+import { API_CONFIG } from '../../services/apiClient';
 import { MOCK_NOTIFICATIONS_LIST } from '../../data/mockNotifications';
 
 export const Navbar: React.FC = () => {
@@ -152,7 +153,8 @@ export const Navbar: React.FC = () => {
           className="desktop-actions"
         >
           {/* Demo Mode Badge */}
-          <span
+        {API_CONFIG.isMockMode && (
+             <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -170,7 +172,7 @@ export const Navbar: React.FC = () => {
             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
             Demo Mode
           </span>
-
+         )}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               {/* Notification Button */}
@@ -518,10 +520,12 @@ export const Navbar: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-4)', backgroundColor: 'var(--bg-surface-secondary)', borderRadius: 'var(--radius-md)' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>System State:</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
-              Demo Mode
-            </span>
+             {API_CONFIG.isMockMode && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+                Demo Mode
+              </span>
+            )}
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: 'var(--space-1) 0' }} />
