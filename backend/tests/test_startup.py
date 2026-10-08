@@ -23,6 +23,8 @@ def test_application_startup(client):
     assert "/api/health" in paths
     assert "/api/v1/auth/register" in paths
     assert "/api/v1/auth/login" in paths
+    assert "/api/v1/auth/me" in paths
+    assert "/api/v1/auth/logout" in paths
     assert "/api/v1/verification/analyze" in paths
     assert "/api/v1/verification/upload" in paths
     assert "/api/v1/verification/{verification_id}" in paths

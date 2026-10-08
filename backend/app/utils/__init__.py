@@ -6,7 +6,12 @@ from app.utils.exceptions import (
     ForbiddenException,
     ConflictException,
 )
-from app.utils.security import hash_password, verify_password, generate_secure_token
+from app.utils.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    decode_access_token,
+)
 from app.utils.file_handler import ensure_upload_directory, validate_file_extension, generate_safe_filename
 
 __all__ = [
@@ -18,7 +23,8 @@ __all__ = [
     "ConflictException",
     "hash_password",
     "verify_password",
-    "generate_secure_token",
+    "create_access_token",
+    "decode_access_token",
     "ensure_upload_directory",
     "validate_file_extension",
     "generate_safe_filename",

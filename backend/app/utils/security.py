@@ -1,40 +1,73 @@
-import hashlib
-import hmac
-import os
-import secrets
-from typing import Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
+import bcrypt
+import jwt
+
+from app.config import get_settings
+
+settings = get_settings()
 
 
-def hash_password(password: str, salt: str = None) -> str:
+def hash_password(password: str) -> str:
     """
-    Hashes a password using PBKDF2-HMAC-SHA256 with a secure random salt.
-    Format returned: salt$hex_hash
+    Hashes a plain password using bcrypt with automatic salt generation.
+    Returns decoded UTF-8 hash string for storage.
     """
-    if salt is None:
-        salt = secrets.token_hex(16)
-    
-    hash_bytes = hashlib.pbkdf2_hmac(
-        hash_name="sha256",
-        password=password.encode("utf-8"),
-        salt=salt.encode("utf-8"),
-        iterations=100_000,
-    )
-    return f"{salt}${hash_bytes.hex()}"
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
-def verify_password(plain_password: str, stored_hash: str) -> bool:
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verifies a plain password against the stored salt$hex_hash format.
-    Uses constant-time comparison to prevent timing attacks.
+    Verifies a plain-text password against a bcrypt hash.
+    Safe against timing attacks.
     """
     try:
-        salt, expected_hash = stored_hash.split("$", 1)
-        test_hash = hash_password(plain_password, salt=salt).split("$", 1)[1]
-        return hmac.compare_digest(expected_hash, test_hash)
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8"),
+        )
     except Exception:
         return False
 
 
-def generate_secure_token(nbytes: int = 32) -> str:
-    """Generates a cryptographically secure random token string."""
-    return secrets.token_urlsafe(nbytes)
+def create_access_token(
+    data: Dict[str, Any],
+    expires_delta: Optional[timedelta] = None,
+) -> str:
+    """
+    Generates a cryptographically signed JWT access token.
+    Includes subject (user ID), issued-at (iat), and expiration (exp) claims.
+    """
+    to_encode = data.copy()
+    now = datetime.now(timezone.utc)
+
+    if expires_delta:
+        expire = now + expires_delta
+    else:
+        expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({
+        "exp": expire,
+        "iat": now,
+    })
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def decode_access_token(token: str) -> Dict[str, Any]:
+    """
+    Decodes and validates a JWT token using the configured secret and algorithm.
+    Raises jwt.ExpiredSignatureError or jwt.InvalidTokenError upon failure.
+    """
+    return jwt.decode(
+        token,
+        settings.JWT_SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM],
+    )

@@ -4,8 +4,10 @@ from app.services.suspicious_detector_service import SuspiciousDetectorService
 from app.services.ocr_service import OCRProcessingService
 from app.services.official_source_service import OfficialSourceVerificationService
 from app.services.risk_scoring_service import RiskScoringService
+from app.services.auth_service import AuthService
 
 __all__ = [
+    "AuthService",
     "NLPAnalysisService",
     "DuplicateDetectionService",
     "SuspiciousDetectorService",

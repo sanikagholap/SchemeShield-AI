@@ -26,7 +26,9 @@ class Settings(BaseSettings):
 
     # Security & Authentication
     SECRET_KEY: str = "insecure-development-secret-key-change-in-production"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    JWT_SECRET_KEY: str = "insecure-development-jwt-secret-key-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day (1440 minutes)
 
     # CORS settings - allows frontend clients to connect cleanly
     CORS_ORIGINS: Union[List[str], str] = [

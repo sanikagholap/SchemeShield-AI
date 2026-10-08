@@ -7,9 +7,11 @@ from app.schemas.common import (
 )
 from app.schemas.auth import (
     UserRegisterRequest,
+    UserRegisterResponse,
     UserLoginRequest,
     TokenResponse,
     UserResponse,
+    CurrentUserResponse,
 )
 from app.schemas.verification import (
     VerificationAnalyzeRequest,
@@ -36,9 +38,11 @@ __all__ = [
     "HealthResponse",
     "PaginationParams",
     "UserRegisterRequest",
+    "UserRegisterResponse",
     "UserLoginRequest",
     "TokenResponse",
     "UserResponse",
+    "CurrentUserResponse",
     "VerificationAnalyzeRequest",
     "VerificationResponse",
     "EvidenceResponse",
