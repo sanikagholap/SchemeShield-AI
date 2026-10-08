@@ -149,18 +149,19 @@
 
 .card-interactive {
   cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
 }
 
 .card-interactive:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-card-hover);
   border-color: var(--border-medium);
 }
 
 .card-glass {
   background: var(--bg-surface-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--bg-surface-glass-border);
 }
 
@@ -419,7 +420,163 @@
 }
 
 /* --------------------------------------------------------------------------
-   Animations
+   Landing Page Specialized Elements & 3D Centerpiece
+   -------------------------------------------------------------------------- */
+.hero-visual-stage {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-main-card {
+  transform: rotateX(4deg) rotateY(-4deg);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(226, 232, 240, 0.8);
+}
+
+.hero-main-card:hover {
+  transform: rotateX(0deg) rotateY(0deg) translateY(-4px);
+  box-shadow: 0 30px 60px -12px rgba(29, 78, 216, 0.18), 0 0 0 1px rgba(147, 197, 253, 0.8);
+}
+
+.floating-pill {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.floating-pill-delayed {
+  animation: floatDelayed 7s ease-in-out infinite 1.5s;
+}
+
+.scan-radar-beam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  animation: radarPulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+.rotating-orbit-ring {
+  animation: orbitRotate 24s linear infinite;
+}
+
+.counter-orbit-ring {
+  animation: orbitRotateReverse 32s linear infinite;
+}
+
+/* Trust Strip */
+.trust-strip-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.trust-strip-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
+}
+
+.trust-strip-item:hover {
+  background-color: var(--bg-surface-secondary);
+}
+
+/* How It Works Progression Connector */
+.workflow-step-card {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  transition: all var(--transition-normal);
+}
+
+.workflow-step-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.workflow-step-badge {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--text-2xl);
+  color: var(--border-strong);
+  line-height: 1;
+}
+
+/* Verification Live Mock Interface */
+.mock-window-frame {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.1), 0 1px 3px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.mock-window-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-surface-secondary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mock-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mock-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Chat Interface on Landing */
+.mock-chat-bubble-user {
+  background: var(--color-brand-navy);
+  color: #ffffff;
+  border-radius: var(--radius-xl) var(--radius-xl) 2px var(--radius-xl);
+  padding: 12px 18px;
+  font-size: var(--text-sm);
+  max-width: 80%;
+  align-self: flex-end;
+  box-shadow: var(--shadow-xs);
+}
+
+.mock-chat-bubble-ai {
+  background: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xl) 2px;
+  padding: 16px 20px;
+  font-size: var(--text-sm);
+  max-width: 85%;
+  align-self: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Keyframe Animations
    -------------------------------------------------------------------------- */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -440,10 +597,56 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes floatDelayed {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes orbitRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitRotateReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes radarPulse {
+  0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; }
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
 .animate-pulse-glow {
   animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Respect Accessibility & Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .floating-pill,
+  .floating-pill-delayed,
+  .rotating-orbit-ring,
+  .counter-orbit-ring,
+  .scan-radar-beam,
+  .hero-main-card {
+    animation: none !important;
+    transform: none !important;
+  }
 }

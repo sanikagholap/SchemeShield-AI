@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ExternalLink, Heart, AlertCircle, FileText } from 'lucide-react';
+import { ShieldCheck, ExternalLink, AlertCircle, Sparkles } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 
 export const Footer: React.FC = () => {
@@ -20,124 +20,121 @@ export const Footer: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: 'var(--space-10)',
             marginBottom: 'var(--space-12)'
           }}
         >
           {/* Brand Info */}
-          <div>
+          <div style={{ maxWidth: '340px' }}>
             <div style={{ filter: 'brightness(0) invert(1)', marginBottom: 'var(--space-4)' }}>
               <BrandLogo showTagline={false} size="md" />
             </div>
             <p style={{ color: '#94a3b8', fontSize: 'var(--text-sm)', lineHeight: 1.6, marginBottom: 'var(--space-4)' }}>
-              SchemeShield AI empowers citizens, journalists, and researchers with AI verification to uncover fake, duplicate, modified, or predatory government scheme claims.
+              SchemeShield AI helps citizens verify suspicious, duplicate, and potentially fake government-scheme information using AI verification and trusted official sources.
             </p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(255,255,255,0.08)', padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '11px', color: '#38bdf8' }}>
-              <ShieldCheck size={14} />
-              <span>₹0-Cost Open Civic Architecture</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(255,255,255,0.08)', padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: '11px', color: '#38bdf8' }}>
+              <Sparkles size={13} />
+              <span>₹0-Cost Open Civic Technology</span>
             </div>
           </div>
 
-          {/* Quick Navigation */}
+          {/* Product Links */}
           <div>
-            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-4)', letterSpacing: '0.02em' }}>
-              Navigation
+            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-sm)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-4)' }}>
+              Product
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 0 }}>
               <li>
-                <Link to="/" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)' }}>
-                  Home & Overview
+                <Link to="/verify" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
+                  Verify Scheme
                 </Link>
               </li>
               <li>
-                <Link to="/verify" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)' }}>
-                  Verify a Scheme
+                <Link to="/schemes" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
+                  Explore Schemes
                 </Link>
               </li>
               <li>
-                <Link to="/schemes" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)' }}>
-                  Explore Official Schemes
+                <Link to="/assistant" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
+                  AI Assistant
                 </Link>
               </li>
               <li>
-                <Link to="/assistant" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)' }}>
-                  SchemeShield AI Assistant
-                </Link>
-              </li>
-              <li>
-                <Link to="/dashboard" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)' }}>
+                <Link to="/dashboard" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
                   Citizen Dashboard
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Verification Scope */}
+          {/* Resources */}
           <div>
-            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-4)', letterSpacing: '0.02em' }}>
-              Detection Capabilities
+            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-sm)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-4)' }}>
+              Resources
             </h4>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 0, color: '#94a3b8', fontSize: 'var(--text-sm)' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10b981' }}>✓</span> Fake Scheme & Fee Detection
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 0 }}>
+              <li>
+                <a href="#how-it-works" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
+                  How It Works
+                </a>
               </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10b981' }}>✓</span> Altered Eligibility Clustering
+              <li>
+                <Link to="/history" style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', transition: 'color 0.15s' }}>
+                  Verification History
+                </Link>
               </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10b981' }}>✓</span> Official Gazette Cross-Matching
+              <li>
+                <a
+                  href="https://factcheck.pib.gov.in"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#38bdf8', fontSize: 'var(--text-sm)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <span>PIB Fact Check</span>
+                  <ExternalLink size={12} />
+                </a>
               </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10b981' }}>✓</span> OCR Document Tampering Analysis
-              </li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10b981' }}>✓</span> Algorithmic Threat & Confidence Scoring
+              <li>
+                <a
+                  href="https://cybercrime.gov.in"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#38bdf8', fontSize: 'var(--text-sm)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <span>Cyber Crime Reporting</span>
+                  <ExternalLink size={12} />
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Official Verification Resources */}
+          {/* Legal */}
           <div>
-            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-4)', letterSpacing: '0.02em' }}>
-              Official Portals
+            <h4 style={{ color: '#ffffff', fontSize: 'var(--text-sm)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--space-4)' }}>
+              Legal & Safety
             </h4>
-            <p style={{ color: '#94a3b8', fontSize: 'var(--text-xs)', marginBottom: 'var(--space-3)' }}>
-              Always confirm authentic notifications directly with government repositories:
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <a
-                href="https://factcheck.pib.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#38bdf8', fontSize: 'var(--text-xs)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>PIB Fact Check Portal</span>
-                <ExternalLink size={12} />
-              </a>
-              <a
-                href="https://www.myscheme.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#38bdf8', fontSize: 'var(--text-xs)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>myScheme (Official Repository)</span>
-                <ExternalLink size={12} />
-              </a>
-              <a
-                href="https://cybercrime.gov.in"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#38bdf8', fontSize: 'var(--text-xs)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>National Cyber Crime Reporting</span>
-                <ExternalLink size={12} />
-              </a>
-            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', padding: 0 }}>
+              <li>
+                <a href="#privacy" onClick={(e) => { e.preventDefault(); alert('Privacy Notice: SchemeShield AI stores zero personal identifiers and does not sell or share citizen scan queries.'); }} style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', cursor: 'pointer' }}>
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#terms" onClick={(e) => { e.preventDefault(); alert('Terms: SchemeShield AI is an algorithmic assistance prototype provided for educational and civic scam identification purposes.'); }} style={{ color: '#cbd5e1', fontSize: 'var(--text-sm)', cursor: 'pointer' }}>
+                  Terms
+                </a>
+              </li>
+              <li>
+                <span style={{ fontSize: 'var(--text-xs)', color: '#94a3b8' }}>
+                  Open-Access Civic License
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Independent Civic Tech Disclaimer Box */}
+        {/* Clear Independent Technology Prototype Statement */}
         <div
           style={{
             backgroundColor: 'rgba(30, 41, 59, 0.7)',
@@ -152,12 +149,12 @@ export const Footer: React.FC = () => {
         >
           <AlertCircle size={20} color="#fbbf24" style={{ flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: 'var(--text-xs)', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
-            <strong style={{ color: '#f1f5f9' }}>Independent Project Disclaimer: </strong>
-            SchemeShield AI is an independent, non-governmental civic research and AI technology project. It does not represent, partner with, or operate as an official Government of India agency. All risk ratings, match assessments, and confidence indices are algorithmic evaluations to assist citizens in spotting fraud. Always cross-verify critical announcements through official government gazettes.
+            <strong style={{ color: '#f1f5f9' }}>Independent Project Statement: </strong>
+            SchemeShield AI is an independent technology prototype and is not an official government website. It is not affiliated with, authorized by, or endorsed by the Government of India or any state government. Verification results, threat indices, and confidence metrics are algorithmic evaluations designed to assist citizens in identifying potential fraud. Always confirm critical scheme requirements directly with official government gazettes.
           </p>
         </div>
 
-        {/* Bottom copyright & status */}
+        {/* Bottom copyright & tagline */}
         <div
           style={{
             display: 'flex',
@@ -172,12 +169,10 @@ export const Footer: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span>© {new Date().getFullYear()} SchemeShield AI. Free & Open Civic Software.</span>
+            <span>© {new Date().getFullYear()} SchemeShield AI. All rights reserved.</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-            <Link to="/schemes" style={{ color: '#94a3b8' }}>Directory</Link>
-            <Link to="/verify" style={{ color: '#94a3b8' }}>Verification Engine</Link>
-            <Link to="/assistant" style={{ color: '#94a3b8' }}>Assistant</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', color: '#94a3b8', fontStyle: 'italic' }}>
+            "Verify Before You Trust."
           </div>
         </div>
       </div>

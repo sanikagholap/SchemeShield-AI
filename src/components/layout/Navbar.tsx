@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
@@ -6,17 +6,28 @@ import { Button } from '../ui/Button';
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 12);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Verify Scheme', path: '/verify' },
     { label: 'Explore Schemes', path: '/schemes' },
-    { label: 'AI Assistant', path: '/assistant' },
-    { label: 'Dashboard', path: '/dashboard' }
+    { label: 'AI Assistant', path: '/assistant' }
   ];
-
-  const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <header
@@ -24,13 +35,15 @@ export const Navbar: React.FC = () => {
         position: 'sticky',
         top: 0,
         zIndex: 'var(--z-header)',
-        backgroundColor: 'rgba(255, 255, 255, 0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border-subtle)',
+        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.82)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: isScrolled ? '1px solid var(--border-medium)' : '1px solid var(--border-subtle)',
+        boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none',
         height: 'var(--navbar-height)',
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease'
       }}
     >
       <div
@@ -50,9 +63,10 @@ export const Navbar: React.FC = () => {
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: 'var(--space-6)'
+            gap: 'var(--space-8)'
           }}
           className="desktop-nav"
+          aria-label="Main Navigation"
         >
           {navLinks.map((link) => (
             <NavLink
@@ -67,12 +81,29 @@ export const Navbar: React.FC = () => {
                 transition: 'color var(--transition-fast)'
               })}
             >
-              {link.label}
+              {({ isActive }) => (
+                <>
+                  <span>{link.label}</span>
+                  {isActive && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: '-2px',
+                        left: 0,
+                        right: 0,
+                        height: '2px',
+                        backgroundColor: 'var(--color-primary)',
+                        borderRadius: 'var(--radius-full)'
+                      }}
+                    />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        {/* Desktop Auth Actions */}
+        {/* Desktop Auth & Primary Action */}
         <div
           style={{
             display: 'none',
@@ -86,9 +117,9 @@ export const Navbar: React.FC = () => {
               Login
             </Button>
           </Link>
-          <Link to="/verify">
+          <Link to="/signup">
             <Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />}>
-              Verify Now
+              Get Started
             </Button>
           </Link>
         </div>
@@ -97,7 +128,8 @@ export const Navbar: React.FC = () => {
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="mobile-menu-btn"
-          aria-label="Toggle navigation menu"
+          aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={isMobileMenuOpen}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -137,7 +169,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={closeMenu}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
                     padding: 'var(--space-3) var(--space-4)',
                     borderRadius: 'var(--radius-md)',
@@ -160,21 +192,21 @@ export const Navbar: React.FC = () => {
           <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: 'var(--space-2) 0' }} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <Link to="/login" onClick={closeMenu} style={{ textDecoration: 'none' }}>
+            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
               <Button variant="outline" fullWidth size="md">
-                Citizen Login
+                Login
               </Button>
             </Link>
-            <Link to="/verify" onClick={closeMenu} style={{ textDecoration: 'none' }}>
+            <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
               <Button variant="primary" fullWidth size="md" leftIcon={<Sparkles size={16} />}>
-                Verify a Scheme
+                Get Started
               </Button>
             </Link>
           </div>
         </div>
       )}
 
-      {/* Inline styles for media query visibility */}
+      {/* Responsive media visibility rule */}
       <style>{`
         @media (min-width: 860px) {
           .desktop-nav { display: flex !important; }
