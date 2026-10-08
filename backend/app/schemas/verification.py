@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -49,6 +49,7 @@ class VerificationResponse(BaseModel):
     confidence_score: Optional[float] = None
     result_label: Optional[str] = None
     explanation: Optional[str] = None
+    evidence: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
 

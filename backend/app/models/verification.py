@@ -1,5 +1,5 @@
-from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import Float, ForeignKey, Integer, String, Text
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from sqlalchemy import Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin
@@ -34,6 +34,7 @@ class VerificationRequest(Base, TimestampMixin):
         String(64), nullable=True
     )  # genuine, suspicious, duplicate, potentially_fake, unable_to_verify
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    evidence: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="verification_requests")
 

@@ -16,7 +16,7 @@ def get_auth_token(client, email="citizen.verify@example.com"):
 
 
 def test_submit_verification_request_authenticated(client):
-    """POST /api/v1/verify succeeds and creates record with pending status."""
+    """POST /api/v1/verify succeeds and runs local pipeline, returning completed status and scores."""
     token = get_auth_token(client, "verify.submit@example.com")
     payload = {
         "scheme_name": "Pradhan Mantri Free Smartphone Scheme",
@@ -32,14 +32,19 @@ def test_submit_verification_request_authenticated(client):
     assert response.status_code == 201
     data = response.json()
     assert data["scheme_name"] == "Pradhan Mantri Free Smartphone Scheme"
-    assert data["status"] == "pending"
+    assert data["status"] == "completed"
     assert data["input_type"] == "url"
     assert data["submitted_url"] == "https://pm-smartphone-claim.xyz"
     assert "id" in data
     assert "created_at" in data
-    # Verified that no fake AI scores are fabricated
-    assert data["risk_score"] is None
-    assert data["confidence_score"] is None
+    assert data["risk_score"] is not None
+    assert 0 <= data["risk_score"] <= 100
+    assert data["confidence_score"] is not None
+    assert 0 <= data["confidence_score"] <= 100
+    assert data["result_label"] in ["genuine", "suspicious", "duplicate", "potentially_fake", "unable_to_verify"]
+    assert data["explanation"] is not None
+    assert "evidence" in data
+    assert data["evidence"]["signals"] is not None
 
 
 def test_submit_verification_unauthenticated(client):

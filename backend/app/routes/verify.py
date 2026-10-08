@@ -10,7 +10,7 @@ from app.schemas.verification import (
     VerificationRequestCreate,
     VerificationResponse,
 )
-from app.services.verification_service import VerificationService
+from app.services.verification_service import VerificationService, verification_service
 
 router = APIRouter(prefix="/verify", tags=["Scheme Verification"])
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/verify", tags=["Scheme Verification"])
     response_model=VerificationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit a government scheme for verification",
-    description="Registers a scheme verification request with status 'pending'. AI analysis will be processed in subsequent stages.",
+    description="Submits a scheme for immediate verification using the local AI/NLP analysis pipeline, returning an explainable risk assessment and evidence.",
 )
 def submit_verification_request(
     payload: VerificationRequestCreate,
@@ -28,15 +28,16 @@ def submit_verification_request(
     current_user: User = Depends(get_current_user),
 ) -> VerificationResponse:
     """
-    Creates a new verification request record tied to the authenticated user.
-    Status defaults to 'pending'; no fake AI results are generated.
+    Creates a new verification request record and runs the local AI/NLP verification pipeline
+    synchronously, computing risk score, confidence score, result label, and structured evidence.
     """
     record = VerificationService.create_verification_request(
         db=db,
         user_id=current_user.id,
         payload=payload,
     )
-    return VerificationResponse.model_validate(record)
+    processed_record = verification_service.process_verification(db=db, request=record)
+    return VerificationResponse.model_validate(processed_record)
 
 
 @router.get(

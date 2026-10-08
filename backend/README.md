@@ -534,7 +534,7 @@ PYTHONPATH=backend pytest backend/tests -v
 
 ## 🎯 Current Backend Scope & Roadmap
 
-### Completed in Milestones 1, 2, & 3:
+### Completed in Milestones 1, 2, 3, & 4:
 - [x] Production-grade modular backend architecture.
 - [x] Zero-cost SQLite database integration with SQLAlchemy 2.0 ORM.
 - [x] User model with `password_hash` column and unique email constraint.
@@ -543,18 +543,113 @@ PYTHONPATH=backend pytest backend/tests -v
   - [x] Full CRUD operations with authentication on modifications.
   - [x] Multi-parameter filtering (keyword search, category, state, department, is_active).
   - [x] Standardized pagination metadata.
-- [x] **Scheme Verification Requests (`/api/v1/verify`):**
-  - [x] Submission pipeline with 'pending' status initialization.
-  - [x] Strict user data isolation (`403 Forbidden` on foreign records).
-  - [x] Chronological user verification history (newest first).
-  - [x] Configurable trusted government domains verification (`myscheme.gov.in`, `.gov.in`, `.nic.in`).
-- [x] Clean service stubs ready for local NLP/ML pipelines in Prompt 4.
-- [x] 36 comprehensive automated tests passing with 100% success rate.
+- [x] **Local AI & NLP Verification Engine (`/api/v1/verify`):**
+  - [x] Deterministic local text normalization (Unicode NFKD, HTML unescaping, punctuation cleaning, tokenization, stop-words, acronym expansion).
+  - [x] Local TF-IDF Vectorization & Cosine Similarity duplicate detection engine.
+  - [x] Rule-based suspicious pattern & scam heuristic detector (credential theft, advance fees, artificial urgency, unrealistic promises, unofficial channels).
+  - [x] Multi-factor official domain trust validation with nuanced explanation.
+  - [x] Bounded risk scoring (0–100) and evidence confidence scoring (0–100).
+  - [x] Explainable citizen verdict labeling (`genuine`, `suspicious`, `duplicate`, `potentially_fake`, `unable_to_verify`).
+  - [x] Structured evidence JSON audit trails.
+  - [x] Synchronous local processing with safe error handling.
+- [x] 56 comprehensive automated tests passing with 100% success rate.
 
-### Future Backend Milestones (Prompt 4+):
-- **NLP Analysis Engine:** Local open-source entity extraction, linguistic urgency detection.
-- **Duplicate Detection Engine:** Local TF-IDF/embedding similarity search against verified scheme repository.
-- **Suspicious Content Detection:** Heuristic rule engines scanning for scam indicators (registration fees, fake domains).
-- **OCR Pipeline:** Integration with open-source OCR (Tesseract / pytesseract) for flyer processing.
-- **Risk Scoring Algorithm:** Weighted synthesis of all pipeline signals into a 0.0–1.0 risk index.
+---
+
+## 🧠 Local Scheme Verification Engine Architecture
+
+SchemeShield AI implements a **100% local, zero-cost, privacy-preserving AI/NLP verification engine**. It does **not** send citizen submissions or sensitive documents to external closed-source AI APIs (e.g. OpenAI, Gemini) and requires no paid cloud infrastructure.
+
+```text
+Citizen Submission (Text, URL, Details)
+                     │
+                     ▼
+       ┌───────────────────────────────┐
+       │   NLP & Text Preprocessor     │
+       │ (NFKD, HTML, Acronyms, StopW) │
+       └──────────────┬────────────────┘
+                      │
+        ┌─────────────┼──────────────┐
+        ▼             ▼              ▼
+ ┌─────────────┐┌─────────────┐┌──────────────┐
+ │ TF-IDF      ││ Scam Heuristic││ Domain Trust│
+ │ Similarity  ││ Rules Engine││ Evaluation   │
+ └──────┬──────┘└──────┬──────┘└──────┬───────┘
+        │              │              │
+        └──────────────┼──────────────┘
+                       ▼
+        ┌──────────────────────────────┐
+        │  Risk & Confidence Synthesizer│
+        │   (0-100 Bounded Scores)     │
+        └──────────────┬───────────────┘
+                       │
+                       ▼
+       ┌───────────────────────────────┐
+       │ Citizen Explanation & Evidence│
+       │  (Verdict Label + JSON Audit) │
+       └───────────────────────────────┘
+```
+
+### 1. NLP Preprocessing Pipeline (`NLPAnalysisService`)
+- **Safe Unicode Normalization:** Applies NFKD decomposition and ASCII conversion to resist homograph/unicode obfuscation tricks.
+- **Noise Reduction:** Strips raw URL patterns and HTML tags while extracting textual content.
+- **Acronym Expansion:** Deterministically expands common welfare scheme acronyms (e.g. `PM` -> `Pradhan Mantri`) to maximize lexical recall.
+- **Deterministic Tokenization:** Filters curated stop-words and short tokens, providing n-gram extraction (unigrams and bigrams).
+
+### 2. Scheme Similarity & Duplicate Detection (`DuplicateDetectionService`)
+- **Algorithm:** Pure-Python `LocalTfidfVectorizer` paired with sparse Cosine Similarity. Zero compiled C-extensions required; immune to system DLL execution restrictions.
+- **Corpus Comparison:** Compares submitted titles and descriptions against stored reference schemes (`Scheme` table).
+- **Thresholds:**
+  - `HIGH_SIMILARITY_THRESHOLD = 0.70` (potential duplicate claim or direct variant).
+  - `MODERATE_SIMILARITY_THRESHOLD = 0.35` (thematic overlap; shares terminology).
+- **Nuance:** Similarity does *not* imply fraud; it indicates catalog duplication or known scheme variants.
+
+### 3. Suspicious Scam Pattern Detection (`SuspiciousDetectorService`)
+- Heuristic regular-expression rules scanning for known fraud tactics across 5 categories:
+  1. **`CREDENTIAL_HARVESTING`** (Critical): Requests for OTP, banking PINs, netbanking passwords, or CVV. Legitimate government portals never solicit private citizen credentials.
+  2. **`ADVANCE_FEE_FRAUD`** (High): Demands for upfront "registration fees", "processing fees", or personal UPI transfers.
+  3. **`UNREALISTIC_GUARANTEES`** (High): Claims of 100% unconditional instant cash, free electronics, or prize drawings.
+  4. **`ARTIFICIAL_URGENCY`** (Medium): Pressuring citizens with "offer expires in 2 hours" or "limited slots".
+  5. **`UNOFFICIAL_CHANNELS`** (Medium): Directing citizens to private Telegram channels or demanding WhatsApp forwards.
+- Returns matched indicators, severity scores, and citizen-friendly explanations.
+
+### 4. Official Domain Trust Signal (`OfficialSourceVerificationService`)
+- Safely parses submitted URLs to verify hostname against trusted patterns (`.gov.in`, `.nic.in`, `myscheme.gov.in`).
+- **Critical Principles:**
+  - An official government domain is a **positive corroboration signal**, but does not alone guarantee the authenticity of message text.
+  - A non-government domain does **not** automatically label a scheme as fake; third-party news outlets, blogs, and NGOs frequently report on genuine programs.
+
+### 5. Risk Score & Confidence Score Definitions
+- **Risk Score (`0 – 100`):**
+  - Measures the likelihood of deception, fraud, or policy violation.
+  - `0`: Extremely low risk.
+  - `100`: Extremely high risk (blatant credential harvesting or fee scam).
+  - Baseline starts at neutral 20. Boosted by suspicious red flags (+30 to +80 floor) and untrusted domain claims (+10 to +20). Reduced by verified `.gov.in` domain (-25).
+- **Confidence Score (`0 – 100`):**
+  - Measures the quantity and consistency of observable evidence.
+  - Boosted by sufficient text length (>= 120 chars), presence of a verifiable URL, catalog candidate matches, and concordant fraud signals.
+  - Lowered when input is sparse, ambiguous, or lacks corroborating sources.
+  - **Important:** Risk and Confidence are independent metrics. A submission can have *High Risk with Low Confidence*, or *Low Risk with High Confidence*.
+
+### 6. Result Label Hierarchy
+- **`potentially_fake`:** Triggered when `risk_score >= 65.0` or critical red flags (`CREDENTIAL_HARVESTING`, `ADVANCE_FEE_FRAUD`) are present.
+- **`duplicate`:** Triggered when duplicate similarity is high (`>= 0.70`) with an existing catalog record and risk is low (< 50).
+- **`suspicious`:** Triggered when `risk_score >= 40.0` or non-government domains circulate unverified welfare promises.
+- **`genuine`:** Requires all 4 conditions:
+  1. Hosted on a verified government portal (`.gov.in` or `.nic.in`).
+  2. Zero suspicious red flags detected.
+  3. Low risk score (`<= 25.0`).
+  4. High confidence score (`>= 55.0`).
+- **`unable_to_verify`:** Default outcome when evidence is insufficient (`confidence < 30.0` or text < 15 chars) or third-party claims cannot be conclusively corroborated.
+
+---
+
+## ⚖️ Important Disclaimer
+
+> [!CAUTION]
+> **SchemeShield AI is an independent open-source / student academic engineering project.**
+> - SchemeShield AI is **NOT** affiliated with, endorsed by, certified by, or officially representative of the Government of India, the National Informatics Centre (NIC), Digital India, or any state ministry.
+> - Analysis results, risk scores, and verdicts produced by SchemeShield AI are heuristic evaluations generated for informational and awareness purposes only.
+> - Citizens are strongly advised to always consult authoritative government portals (such as [myScheme.gov.in](https://www.myscheme.gov.in), [india.gov.in](https://www.india.gov.in), or individual ministerial domains) before submitting applications or making financial decisions.
+
 
