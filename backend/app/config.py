@@ -46,6 +46,30 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Official Government Sources Configuration (Configurable trusted domains)
+    TRUSTED_GOVERNMENT_DOMAINS: Union[List[str], str] = [
+        "myscheme.gov.in",
+        "india.gov.in",
+        "pib.gov.in",
+        "data.gov.in",
+        "digitalindia.gov.in",
+    ]
+
+    @field_validator("TRUSTED_GOVERNMENT_DOMAINS", mode="before")
+    @classmethod
+    def assemble_trusted_domains(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str):
+            v_trimmed = v.strip()
+            if v_trimmed.startswith("[") and v_trimmed.endswith("]"):
+                try:
+                    return json.loads(v_trimmed)
+                except Exception:
+                    pass
+            return [domain.strip().lower() for domain in v.split(",") if domain.strip()]
+        elif isinstance(v, list):
+            return [d.lower() for d in v]
+        return []
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

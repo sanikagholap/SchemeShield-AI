@@ -349,6 +349,131 @@ The authentication system is completely decoupled and ready for the frontend tea
 
 ---
 
+## 🏛️ Scheme Management API Specification (`/api/v1/schemes`)
+
+SchemeShield AI maintains reference records of verified and cataloged government welfare schemes for comparison, duplicate detection, and citizen awareness.
+
+### 1. List & Search Schemes (Public)
+- **Endpoint:** `GET /api/v1/schemes`
+- **Authentication:** Optional (Public)
+- **Query Parameters:**
+  - `search` *(string, optional)*: Keyword search across scheme title and description.
+  - `category` *(string, optional)*: Filter by category (e.g. `Agriculture`, `Education`, `Housing`).
+  - `state` *(string, optional)*: Filter by state (e.g. `Central`, `Maharashtra`, `Punjab`).
+  - `department` *(string, optional)*: Filter by governing ministry or department.
+  - `page` *(int, default: 1)*: Page number (1-indexed).
+  - `page_size` *(int, default: 20)*: Number of items per page.
+
+**Example Response (`200 OK`):**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "PM Kisan Samman Nidhi",
+      "description": "Direct income support of Rs 6,000 per year for farmer families.",
+      "department": "Ministry of Agriculture & Farmers Welfare",
+      "category": "Agriculture",
+      "eligibility": "Small and marginal landholding farmer families.",
+      "benefits": "Rs 6,000 annually in three equal installments.",
+      "application_process": "Online via pmkisan.gov.in portal.",
+      "official_url": "https://pmkisan.gov.in",
+      "source_name": "myScheme Portal",
+      "source_domain": "pmkisan.gov.in",
+      "state": "Central",
+      "launch_year": 2019,
+      "is_active": true,
+      "created_at": "2026-10-08T11:30:00Z",
+      "updated_at": "2026-10-08T11:30:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 1
+}
+```
+
+### 2. Get Single Scheme (Public)
+- **Endpoint:** `GET /api/v1/schemes/{scheme_id}`
+- **Authentication:** Optional (Public)
+- **Status:** `200 OK` (or `404 Not Found`)
+
+### 3. Create Scheme (Protected)
+- **Endpoint:** `POST /api/v1/schemes`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Status:** `201 Created`
+- **Request Body:** Requires `name` (unique). Accepts all optional descriptive fields.
+
+### 4. Update Scheme (Protected)
+- **Endpoint:** `PATCH /api/v1/schemes/{scheme_id}`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Status:** `200 OK`
+- **Request Body:** All fields optional.
+
+### 5. Delete Scheme (Protected)
+- **Endpoint:** `DELETE /api/v1/schemes/{scheme_id}`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Status:** `200 OK`
+
+---
+
+## 🔍 Scheme Verification API Specification (`/api/v1/verify`)
+
+Citizens can submit suspicious schemes, social media messages, or flyers for multi-factor verification.
+
+### 1. Submit Verification Request
+- **Endpoint:** `POST /api/v1/verify`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Status Code:** `201 Created`
+
+**Request Body:**
+```json
+{
+  "scheme_name": "Pradhan Mantri Free Smartphone Scheme",
+  "description": "WhatsApp forward claiming government delivers free smartphones after Rs 299 payment.",
+  "submitted_url": "https://pm-freemobile-registration.xyz",
+  "input_type": "url"
+}
+```
+
+**Success Response (`201 Created`):**
+```json
+{
+  "id": 1,
+  "user_id": 1,
+  "input_type": "url",
+  "scheme_name": "Pradhan Mantri Free Smartphone Scheme",
+  "description": "WhatsApp forward claiming government delivers free smartphones after Rs 299 payment.",
+  "submitted_url": "https://pm-freemobile-registration.xyz",
+  "extracted_text": null,
+  "status": "pending",
+  "risk_score": null,
+  "confidence_score": null,
+  "result_label": null,
+  "explanation": "Verification request registered. Awaiting analysis by verification engine.",
+  "created_at": "2026-10-08T11:40:00Z",
+  "updated_at": "2026-10-08T11:40:00Z"
+}
+```
+*Note: Status starts as `pending`. No fake AI scores are fabricated.*
+
+### 2. Get Single Verification Request
+- **Endpoint:** `GET /api/v1/verify/{verification_id}`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Security:** Strict data isolation enforced. Users can only access their own verification records (`403 Forbidden` if accessed by another user).
+
+### 3. Get Verification Audit History
+- **Endpoint:** `GET /api/v1/verify/history`
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Query Parameters:**
+  - `page` *(int, default: 1)*
+  - `page_size` *(int, default: 20)*
+- **Response:** Paginated list of user's own verification requests sorted newest first.
+
+---
+
+
 ## 🧪 Running Automated Tests
 
 Run the complete test suite with `pytest`:
@@ -361,8 +486,8 @@ $env:PYTHONPATH="backend"; pytest backend/tests -v
 PYTHONPATH=backend pytest backend/tests -v
 ```
 
-### Test Coverage (18 Automated Tests):
-- ✅ **Authentication Suite (`test_auth.py`):**
+### Test Coverage (36 Automated Tests):
+- ✅ **Authentication Suite (`test_auth.py` - 13 Tests):**
   1. `test_successful_registration` — Valid citizen registration and safe response fields.
   2. `test_duplicate_email_registration` — Rejection of duplicate email with 409 Conflict.
   3. `test_invalid_email_registration` — Rejection of invalid email patterns with 422.
@@ -376,39 +501,60 @@ PYTHONPATH=backend pytest backend/tests -v
   11. `test_current_user_expired_token` — 401 response when token expiration is exceeded.
   12. `test_inactive_user_blocked` — 403 Forbidden for deactivated accounts.
   13. `test_logout_endpoint` — Validates authenticated session termination.
-- ✅ **Health Suite (`test_health.py`):**
-  14. `test_health_check_endpoint` — Validates GET /api/health and SQLite connectivity.
-- ✅ **Database Suite (`test_database.py`):**
-  15. `test_database_connection_live` — Verifies engine connectivity.
-  16. `test_database_tables_initialized` — Verifies all 7 database tables are created.
-  17. `test_database_session_dependency` — Verifies get_db session lifecycle.
-- ✅ **Startup Suite (`test_startup.py`):**
-  18. `test_application_startup` — Verifies FastAPI startup, Swagger `/docs`, and route mounting.
+- ✅ **Scheme Management Suite (`test_schemes.py` - 9 Tests):**
+  14. `test_scheme_listing_public` — Public retrieval of schemes.
+  15. `test_create_scheme_authenticated` — Scheme creation with auth token.
+  16. `test_create_scheme_unauthenticated` — 401 Unauthorized check.
+  17. `test_create_duplicate_scheme_name` — 409 Conflict check.
+  18. `test_get_scheme_by_id` — Retrieval of single scheme by ID.
+  19. `test_get_scheme_not_found` — 404 Not Found check.
+  20. `test_update_scheme` — Field updates via PATCH.
+  21. `test_delete_scheme` — Safe scheme deletion.
+  22. `test_scheme_filtering_and_search` — Filters for search, category, state, and department.
+- ✅ **Scheme Verification Suite (`test_verify.py` - 9 Tests):**
+  23. `test_submit_verification_request_authenticated` — Submitting verification request with 'pending' status.
+  24. `test_submit_verification_unauthenticated` — 401 Unauthorized check.
+  25. `test_submit_verification_invalid_input` — 422 input validation check.
+  26. `test_get_verification_by_id` — Citizen retrieving own verification record.
+  27. `test_get_verification_not_found` — 404 Not Found check.
+  28. `test_user_cannot_access_another_users_verification` — 403 Forbidden cross-user data isolation.
+  29. `test_get_verification_history` — Paginated user verification history (newest first).
+  30. `test_verification_history_unauthenticated` — 401 Unauthorized check.
+  31. `test_official_source_domain_evaluation` — Official domain trust analysis (.gov.in, .nic.in, myscheme.gov.in).
+- ✅ **Health Suite (`test_health.py` - 1 Test):**
+  32. `test_health_check_endpoint` — Validates GET /api/health and SQLite connectivity.
+- ✅ **Database Suite (`test_database.py` - 3 Tests):**
+  33. `test_database_connection_live` — Verifies engine connectivity.
+  34. `test_database_tables_initialized` — Verifies all 9 database tables are created.
+  35. `test_database_session_dependency` — Verifies get_db session lifecycle.
+- ✅ **Startup Suite (`test_startup.py` - 1 Test):**
+  36. `test_application_startup` — Verifies FastAPI startup, Swagger `/docs`, and route mounting.
 
 ---
 
 ## 🎯 Current Backend Scope & Roadmap
 
-### Completed in Milestones 1 & 2:
+### Completed in Milestones 1, 2, & 3:
 - [x] Production-grade modular backend architecture.
 - [x] Zero-cost SQLite database integration with SQLAlchemy 2.0 ORM.
 - [x] User model with `password_hash` column and unique email constraint.
-- [x] Relational models for Schemes, Verifications, Evidence, History, and Conversations.
-- [x] **Secure authentication system:**
-  - [x] Citizen registration (`POST /api/v1/auth/register`)
-  - [x] Citizen login (`POST /api/v1/auth/login`)
-  - [x] Protected profile endpoint (`GET /api/v1/auth/me`)
-  - [x] Logout endpoint (`POST /api/v1/auth/logout`)
-  - [x] `bcrypt` password hashing & verification
-  - [x] Cryptographically signed JWT access tokens (`PyJWT`)
-  - [x] Centralized error handling and constant-time credentials verification
-- [x] Pluggable services architecture for future AI modules.
-- [x] 18 unit and integration tests passing.
+- [x] Full JWT Authentication system (`register`, `login`, `me`, `logout`).
+- [x] **Government Scheme Storage & Management (`/api/v1/schemes`):**
+  - [x] Full CRUD operations with authentication on modifications.
+  - [x] Multi-parameter filtering (keyword search, category, state, department, is_active).
+  - [x] Standardized pagination metadata.
+- [x] **Scheme Verification Requests (`/api/v1/verify`):**
+  - [x] Submission pipeline with 'pending' status initialization.
+  - [x] Strict user data isolation (`403 Forbidden` on foreign records).
+  - [x] Chronological user verification history (newest first).
+  - [x] Configurable trusted government domains verification (`myscheme.gov.in`, `.gov.in`, `.nic.in`).
+- [x] Clean service stubs ready for local NLP/ML pipelines in Prompt 4.
+- [x] 36 comprehensive automated tests passing with 100% success rate.
 
-### Future Backend Milestones:
+### Future Backend Milestones (Prompt 4+):
 - **NLP Analysis Engine:** Local open-source entity extraction, linguistic urgency detection.
 - **Duplicate Detection Engine:** Local TF-IDF/embedding similarity search against verified scheme repository.
 - **Suspicious Content Detection:** Heuristic rule engines scanning for scam indicators (registration fees, fake domains).
 - **OCR Pipeline:** Integration with open-source OCR (Tesseract / pytesseract) for flyer processing.
-- **Official Source Verification:** Domain validation (`.gov.in`, `.nic.in`) and official gazette cross-checks.
 - **Risk Scoring Algorithm:** Weighted synthesis of all pipeline signals into a 0.0–1.0 risk index.
+

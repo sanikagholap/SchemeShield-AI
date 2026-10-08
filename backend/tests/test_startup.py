@@ -30,5 +30,8 @@ def test_application_startup(client):
     assert "/api/v1/verification/{verification_id}" in paths
     assert "/api/v1/schemes" in paths
     assert "/api/v1/schemes/{scheme_id}" in paths
+    assert "/api/v1/verify" in paths
+    assert "/api/v1/verify/history" in paths
+    assert "/api/v1/verify/{verification_id}" in paths
     assert "/api/v1/history" in paths
     assert "/api/v1/assistant/chat" in paths

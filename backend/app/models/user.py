@@ -5,7 +5,7 @@ from typing import List, TYPE_CHECKING
 from app.database.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.verification import Verification, VerificationHistory
+    from app.models.verification import Verification, VerificationEvidence, VerificationHistory, VerificationRequest
     from app.models.scheme import SavedScheme
     from app.models.conversation import AIConversation
 
@@ -34,6 +34,9 @@ class User(Base, TimestampMixin):
     # Relationships for future features
     verifications: Mapped[List["Verification"]] = relationship(
         "Verification", back_populates="user", cascade="all, delete-orphan"
+    )
+    verification_requests: Mapped[List["VerificationRequest"]] = relationship(
+        "VerificationRequest", back_populates="user", cascade="all, delete-orphan"
     )
     saved_schemes: Mapped[List["SavedScheme"]] = relationship(
         "SavedScheme", back_populates="user", cascade="all, delete-orphan"

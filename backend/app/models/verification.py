@@ -8,6 +8,39 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
+class VerificationRequest(Base, TimestampMixin):
+    """
+    Model storing a citizen's scheme verification requests and subsequent analysis results.
+    """
+    __tablename__ = "verification_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    input_type: Mapped[str] = mapped_column(
+        String(32), default="text", nullable=False
+    )  # text, url, document
+    scheme_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    submitted_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    extracted_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(32), default="pending", nullable=False, index=True
+    )  # pending, processing, completed, failed
+    risk_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    confidence_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    result_label: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True
+    )  # genuine, suspicious, duplicate, potentially_fake, unable_to_verify
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="verification_requests")
+
+    def __repr__(self) -> str:
+        return f"<VerificationRequest(id={self.id}, scheme='{self.scheme_name}', status='{self.status}')>"
+
+
 class Verification(Base, TimestampMixin):
     """
     Verification record for user-submitted scheme text, links, or documents.

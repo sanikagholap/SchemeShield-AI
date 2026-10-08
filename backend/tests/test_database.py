@@ -17,6 +17,8 @@ def test_database_tables_initialized():
 
     expected_tables = {
         "users",
+        "schemes",
+        "verification_requests",
         "government_schemes",
         "verifications",
         "verification_evidence",

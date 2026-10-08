@@ -14,17 +14,22 @@ from app.schemas.auth import (
     CurrentUserResponse,
 )
 from app.schemas.verification import (
-    VerificationAnalyzeRequest,
+    VerificationRequestCreate,
     VerificationResponse,
+    VerificationHistoryResponse,
+    VerificationAnalyzeRequest,
     EvidenceResponse,
     VerificationUploadResponse,
 )
 from app.schemas.scheme import (
+    SchemeCreate,
+    SchemeUpdate,
     SchemeResponse,
+    SchemeListResponse,
     SavedSchemeResponse,
 )
 from app.schemas.history import (
-    VerificationHistoryResponse,
+    VerificationHistoryResponse as LegacyVerificationHistoryResponse,
 )
 from app.schemas.assistant import (
     AssistantChatRequest,
@@ -43,13 +48,18 @@ __all__ = [
     "TokenResponse",
     "UserResponse",
     "CurrentUserResponse",
-    "VerificationAnalyzeRequest",
+    "VerificationRequestCreate",
     "VerificationResponse",
+    "VerificationHistoryResponse",
+    "VerificationAnalyzeRequest",
     "EvidenceResponse",
     "VerificationUploadResponse",
+    "SchemeCreate",
+    "SchemeUpdate",
     "SchemeResponse",
+    "SchemeListResponse",
     "SavedSchemeResponse",
-    "VerificationHistoryResponse",
+    "LegacyVerificationHistoryResponse",
     "AssistantChatRequest",
     "AssistantChatResponse",
 ]
