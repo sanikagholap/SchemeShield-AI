@@ -2,7 +2,7 @@ import { HistoryItem } from '../types/history';
 import { MOCK_HISTORY_ITEMS } from '../data/mockSchemes';
 import { simulateLatency } from './apiClient';
 
-let localHistory: HistoryItem[] = [...MOCK_HISTORY_ITEMS];
+let localHistory: HistoryItem[] = [];
 
 export const historyService = {
   /**
