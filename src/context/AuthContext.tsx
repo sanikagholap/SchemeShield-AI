@@ -14,9 +14,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return JSON.parse(saved);
       }
       // Default to demo citizen session for seamless evaluator experience
-      return MOCK_CITIZEN_USER;
+      
+      return null;
     } catch {
-      return MOCK_CITIZEN_USER;
+      return null;
     }
   });
 
