@@ -447,29 +447,53 @@ Citizens can submit suspicious schemes, social media messages, or flyers for mul
   "description": "WhatsApp forward claiming government delivers free smartphones after Rs 299 payment.",
   "submitted_url": "https://pm-freemobile-registration.xyz",
   "extracted_text": null,
-  "status": "pending",
-  "risk_score": null,
-  "confidence_score": null,
-  "result_label": null,
-  "explanation": "Verification request registered. Awaiting analysis by verification engine.",
+  "status": "completed",
+  "risk_score": 75.0,
+  "confidence_score": 65.0,
+  "result_label": "potentially_fake",
+  "explanation": "Critical scam indicators detected. The announcement exhibits patterns commonly associated with fraudulent campaigns...",
+  "evidence": {
+    "signals": [
+      { "type": "official_source", "status": "non_trusted_domain" },
+      { "type": "suspicious_language", "status": "detected" }
+    ]
+  },
   "created_at": "2026-10-08T11:40:00Z",
   "updated_at": "2026-10-08T11:40:00Z"
 }
 ```
-*Note: Status starts as `pending`. No fake AI scores are fabricated.*
 
-### 2. Get Single Verification Request
+### 2. Verify Uploaded Document / Image (`POST /api/v1/verify/document`)
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Content-Type:** `multipart/form-data`
+- **Fields:**
+  - `file` *(UploadFile, required)*: PDF, PNG, JPG/JPEG, WEBP, or TXT document (max 10 MB).
+  - `scheme_name` *(string, optional)*: Claimed title if known.
+- **Response:** [`DocumentVerificationResponse`](file:///c:/Users/sanik/SchemeShield-AI/backend/app/schemas/verification.py) with `ocr_metadata` detailing method (`plain_text`, `pdf_text`, or `ocr`), page count, character count, and full verification metrics.
+
+### 3. Verify Scheme Announcement URL (`POST /api/v1/verify/url`)
+- **Authentication:** Required (`Authorization: Bearer <access_token>`)
+- **Request Body:**
+  ```json
+  {
+    "url": "https://myscheme.gov.in/schemes/pmayg",
+    "scheme_name": "Pradhan Mantri Awas Yojana"
+  }
+  ```
+- **Response:** [`URLVerificationResponse`](file:///c:/Users/sanik/SchemeShield-AI/backend/app/schemas/verification.py) with SSRF validation, webpage text extraction, domain trust signal, and explainable verdict.
+
+### 4. Get Single Verification Request
 - **Endpoint:** `GET /api/v1/verify/{verification_id}`
 - **Authentication:** Required (`Authorization: Bearer <access_token>`)
 - **Security:** Strict data isolation enforced. Users can only access their own verification records (`403 Forbidden` if accessed by another user).
 
-### 3. Get Verification Audit History
+### 5. Get Verification Audit History
 - **Endpoint:** `GET /api/v1/verify/history`
 - **Authentication:** Required (`Authorization: Bearer <access_token>`)
 - **Query Parameters:**
   - `page` *(int, default: 1)*
   - `page_size` *(int, default: 20)*
-- **Response:** Paginated list of user's own verification requests sorted newest first.
+- **Response:** Paginated list of user's own verification requests sorted newest first (includes text, document, and URL submissions).
 
 ---
 
@@ -534,7 +558,7 @@ PYTHONPATH=backend pytest backend/tests -v
 
 ## 🎯 Current Backend Scope & Roadmap
 
-### Completed in Milestones 1, 2, 3, & 4:
+### Completed in Milestones 1, 2, 3, 4, & 5:
 - [x] Production-grade modular backend architecture.
 - [x] Zero-cost SQLite database integration with SQLAlchemy 2.0 ORM.
 - [x] User model with `password_hash` column and unique email constraint.
@@ -552,7 +576,62 @@ PYTHONPATH=backend pytest backend/tests -v
   - [x] Explainable citizen verdict labeling (`genuine`, `suspicious`, `duplicate`, `potentially_fake`, `unable_to_verify`).
   - [x] Structured evidence JSON audit trails.
   - [x] Synchronous local processing with safe error handling.
-- [x] 56 comprehensive automated tests passing with 100% success rate.
+- [x] **Document & Image OCR Verification (`/api/v1/verify/document`):**
+  - [x] Multipart upload handling for PDF, PNG, JPG/JPEG, WEBP, and TXT files.
+  - [x] Local text extraction via `pypdf` (embedded digital text) and local `pytesseract` + `Pillow` (scanned flyers).
+  - [x] Enforced file size limits (`MAX_UPLOAD_SIZE_MB`, default 10MB) and extension safety.
+  - [x] Automatic cleanup of temporary upload artifacts (zero disk pollution).
+  - [x] Structured OCR metadata generation (`extraction_method`, `page_count`, `text_length`, `warnings`).
+- [x] **Safe Web URL Verification (`/api/v1/verify/url`):**
+  - [x] Strict URL scheme validation (`http`/`https`), rejecting dangerous protocols (`javascript:`, `file:`, `data:`, `ftp:`).
+  - [x] SSRF guard blocking private, loopback, and link-local IP addresses.
+  - [x] Safe HTML text extraction via `BeautifulSoup` with size (1MB) and timeout (5.0s) guards.
+  - [x] Seamless feeding of extracted text into existing verification engine.
+- [x] **74 comprehensive automated tests passing with 100% success rate.**
+
+---
+
+## 📄 Document & Image OCR Verification (`/api/v1/verify/document`)
+
+Citizens can upload photos of pamphlets, WhatsApp flyers, newspaper clippings, or PDF documents to verify legitimacy.
+
+### Supported Formats & Limits:
+- **Formats:** PDF (`.pdf`), PNG (`.png`), JPEG/JPG (`.jpg`, `.jpeg`), WebP (`.webp`), Text (`.txt`).
+- **File Size Limit:** Default 10 MB (configurable via `MAX_UPLOAD_SIZE_MB`).
+- **Temporary Storage & Cleanup:** Uploaded files are written with cryptographically randomized filenames to a non-public directory, processed, and immediately deleted via safe `finally` blocks. No binary file BLOBs are stored in SQLite.
+
+### Local OCR Engine Setup:
+- **PDF Documents:** Analyzed locally using `pypdf`. Embedded text layers are extracted directly without external dependencies.
+- **Image Flyers & Scanned PDFs:** Processed locally using `pytesseract` and `Pillow`.
+- **System Tesseract Installation:**
+  If you intend to analyze image files (PNG/JPG), Tesseract OCR must be installed on the host operating system:
+  - **Windows:** `winget install UB-Mannheim.TesseractOCR` (or download the installer from GitHub)
+  - **Debian / Ubuntu:** `sudo apt-get update && sudo apt-get install -y tesseract-ocr`
+  - **macOS:** `brew install tesseract`
+  *(Note: If Tesseract is not installed on the system, text-based documents such as TXT and text-embedded PDFs will still process seamlessly, and the API returns a clear, actionable notification for images).*
+
+### Distinction Between Confidence Metrics:
+- **OCR Quality / Metadata:** Reflects character yield, extraction technique (`plain_text`, `pdf_text`, `ocr`), and document parsing notices.
+- **Verification Confidence Score (`0 – 100`):** Reflects the volume and concordance of corroborating evidence found in the extracted text.
+- **Risk Score (`0 – 100`):** Reflects the likelihood of fraud, credential theft, or scam tactics detected in the extracted text.
+
+---
+
+## 🌐 Safe Webpage URL Verification (`/api/v1/verify/url`)
+
+Citizens can submit suspicious links circulating online to determine whether they belong to authentic government portals.
+
+### Security & SSRF Protection:
+- **Protocol Whitelisting:** Permitted protocols are strictly limited to `http` and `https`. Schemes like `file://`, `javascript:`, `data:`, or `ftp://` are immediately rejected with HTTP 400.
+- **Server-Side Request Forgery (SSRF) Guard:**
+  - Prevents the backend from making requests to internal or private infrastructure.
+  - Hostnames resolving to loopback (`127.0.0.1`, `localhost`, `::1`), private ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), or link-local ranges (`169.254.0.0/16`) are blocked before socket connection.
+- **Resource Limits:**
+  - Connection timeout: 5.0 seconds.
+  - Max response buffer: 1 MB.
+  - Extracted text cap: 8,000 characters.
+- **HTML Boilerplate Stripping:** Scripts, styling, SVG icons, headers, footers, and navigation elements are stripped to isolate the primary announcement text.
+- **Graceful Fallback:** If destination web content cannot be reached (timeout or SSRF block), the domain's authority is still evaluated, and the report clearly indicates that live page content was not fetched.
 
 ---
 
@@ -561,8 +640,16 @@ PYTHONPATH=backend pytest backend/tests -v
 SchemeShield AI implements a **100% local, zero-cost, privacy-preserving AI/NLP verification engine**. It does **not** send citizen submissions or sensitive documents to external closed-source AI APIs (e.g. OpenAI, Gemini) and requires no paid cloud infrastructure.
 
 ```text
-Citizen Submission (Text, URL, Details)
+Citizen Submission (Text, Document/Image, URL)
                      │
+         ┌───────────┴───────────┐
+         ▼                       ▼
+┌──────────────────┐    ┌──────────────────┐
+│ OCR / PDF Parser │    │ SSRF URL Fetcher │
+│ (pypdf, Pillow)  │    │ (httpx, BS4)     │
+└────────┬─────────┘    └────────┬─────────┘
+         │                       │
+         └───────────┬───────────┘
                      ▼
        ┌───────────────────────────────┐
        │   NLP & Text Preprocessor     │

@@ -107,7 +107,10 @@ class VerificationService:
         return items, total
 
     def process_verification(
-        self, db: Session, request: VerificationRequest
+        self,
+        db: Session,
+        request: VerificationRequest,
+        extra_evidence_signal: Optional[Dict[str, Any]] = None,
     ) -> VerificationRequest:
         """
         Executes the end-to-end local scheme verification pipeline synchronously:
@@ -152,12 +155,17 @@ class VerificationService:
                 submitted_url=request.submitted_url,
             )
 
+            # Inject additional signals (e.g., document OCR metadata or URL network inspection)
+            evidence = assessment["evidence"]
+            if extra_evidence_signal and "signals" in evidence:
+                evidence["signals"].insert(0, extra_evidence_signal)
+
             # 6. Update verification record
             request.risk_score = assessment["risk_score"]
             request.confidence_score = assessment["confidence_score"]
             request.result_label = assessment["result_label"]
             request.explanation = assessment["explanation"]
-            request.evidence = assessment["evidence"]
+            request.evidence = evidence
             request.status = "completed"
 
             db.commit()

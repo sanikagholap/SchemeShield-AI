@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     # File Upload settings
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE_MB: int = 10
+    ALLOWED_DOCUMENT_EXTENSIONS: List[str] = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".txt"]
+
+    # URL Verification & SSRF Guard Settings
+    URL_FETCH_TIMEOUT_SECONDS: float = 5.0
+    MAX_URL_RESPONSE_BYTES: int = 1024 * 1024  # 1 MB
+    MAX_EXTRACTED_TEXT_LENGTH: int = 8000
 
     # Logging
     LOG_LEVEL: str = "INFO"
