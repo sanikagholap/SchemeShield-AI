@@ -10,9 +10,12 @@ settings = get_settings()
 
 class OfficialSourceVerificationService:
     """
-    Service responsible for cross-referencing schemes and domains against
-    trusted government databases, official .gov.in / .nic.in domain registries,
-    and configurable authorized portal lists.
+    Service responsible for evaluating domain authority against official
+    government TLD registries (.gov.in / .nic.in) and configured trusted government
+    domain lists.
+
+    Note: Operates via deterministic domain parsing without external government API
+    dependencies or live ministry network requests.
     """
 
     def __init__(self, trusted_domains: Optional[List[str]] = None):
