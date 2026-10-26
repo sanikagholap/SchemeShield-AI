@@ -67,8 +67,8 @@ export const SignupPage: React.FC = () => {
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
       }, 500);
-    } catch {
-      setErrorMessage('Failed to create account. Please retry.');
+    } catch (err: any) {
+      setErrorMessage(err?.message || err?.userFriendlyMessage || 'Failed to create account. Email may already be registered.');
       setIsSubmitting(false);
     }
   };

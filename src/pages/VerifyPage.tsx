@@ -53,43 +53,7 @@ export const VerifyPage: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
 
-  // Demo Samples
-  const handleLoadSample = (sampleKey: 'trusted' | 'suspicious' | 'high_risk') => {
-    setFormError(null);
-    setActiveTab('FORM');
 
-    if (sampleKey === 'trusted') {
-      setSchemeName('National Post-Matric Merit Scholarship Scheme 2026');
-      setSchemeDescription(
-        'Central sector scholarship providing annual financial maintenance allowance to meritorious students from disadvantaged socio-economic backgrounds enrolled in accredited higher secondary and university courses.'
-      );
-      setEligibility('Class 11 through Post-Graduate students with annual household income below ₹2.5 Lakhs. Minimum 55% marks in previous examination.');
-      setBenefits('Direct financial grant of ₹12,00,0 to ₹20,000 per academic year disbursed directly via PFMS into Aadhaar-seeded bank account.');
-      setWebsiteUrl('https://scholarships.gov.in');
-      setIssuingAuthority('Ministry of Social Justice and Empowerment');
-      setAdditionalInfo('Application is completely free on the National Scholarship Portal. No processing fees charged.');
-    } else if (sampleKey === 'suspicious') {
-      setSchemeName('Ayushman Bharat Golden Card Instant Delivery Portal');
-      setSchemeDescription(
-        'Get your official 5-Lakh Ayushman Bharat Gold Card laminated and delivered to your doorstep within 48 hours without needing BPL ration card or socio-economic survey validation.'
-      );
-      setEligibility('All Indian citizens regardless of state, income level, or SECC ration list qualification.');
-      setBenefits('Instant smart health card with 5 Lakh cashless hospital admission guarantee across all local private clinics.');
-      setWebsiteUrl('https://ayushman-card-instant-delivery.com');
-      setIssuingAuthority('Claimed: National Health Authority / Ayushman Kendra');
-      setAdditionalInfo('Requires ₹250 instant door-delivery processing fee payable via QR code.');
-    } else {
-      setSchemeName('PM Free Tractor Subsidy Scheme 2026');
-      setSchemeDescription(
-        'Government is giving 50% subsidy tractors and farm equipment to all farmers under Kisan Nidhi. Pay ₹499 registration fee immediately at pmkisan-tractoryojana-gov.in to book your subsidy slot before quota expires.'
-      );
-      setEligibility('All farmers and rural youth aged 18-50 across India without requiring landholding papers.');
-      setBenefits('50% discount on new Mahindra/Swaraj tractors plus direct ₹1,00,000 cash grant.');
-      setWebsiteUrl('https://pmkisan-tractoryojana-gov.in/apply');
-      setIssuingAuthority('Ministry of Agriculture & Farmers Welfare');
-      setAdditionalInfo('Demands instant ₹499 registration fee deposit to UPI ID: pmkisan.tractor@okaxis.');
-    }
-  };
 
   // File Handling
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,40 +145,22 @@ export const VerifyPage: React.FC = () => {
       method: activeTab
     };
 
-    // Sequential 5-step progress simulation
-    const runAnalysisSteps = async () => {
-      // Step 1: Reading scheme information
-      setCurrentStep(1);
-      await new Promise((resolve) => setTimeout(resolve, 550));
-
-      // Step 2: Comparing scheme details
-      setCurrentStep(2);
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      // Step 3: Checking for suspicious similarities
-      setCurrentStep(3);
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      // Step 4: Evaluating source information
-      setCurrentStep(4);
-      await new Promise((resolve) => setTimeout(resolve, 550));
-
-      // Step 5: Preparing verification result
-      setCurrentStep(5);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const stepInterval = setInterval(() => {
+        setCurrentStep((prev) => (prev < 4 ? prev + 1 : prev));
+      }, 400);
 
       const analyzedResult: VerificationResult = await verificationService.analyzeScheme(verificationPayload);
+      clearInterval(stepInterval);
+      setCurrentStep(5);
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       setIsAnalyzing(false);
       toast.success('Verification analysis completed.');
       navigate('/verification-result', { state: { result: analyzedResult } });
-    };
-
-    try {
-      await runAnalysisSteps();
-    } catch {
+    } catch (err: any) {
       setIsAnalyzing(false);
-      setFormError('Verification process could not be completed. Please try again.');
+      setFormError(err?.message || err?.userFriendlyMessage || 'Verification process could not be completed. Please ensure backend is running and try again.');
     }
   };
 
@@ -251,50 +197,6 @@ export const VerifyPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Quick Test Demo Presets Bar */}
-      <Card variant="glass" padding="md" style={{ marginBottom: 'var(--space-8)', border: '1px dashed var(--color-primary)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <Sparkles size={16} color="var(--color-primary)" />
-            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-primary)' }}>
-              Quick Demo Prefills:
-            </span>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-              Click to load realistic test cases
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleLoadSample('trusted')}
-              style={{ fontSize: '11px', borderColor: 'var(--color-verified-border)', color: 'var(--color-verified-text)', backgroundColor: 'var(--color-verified-bg)' }}
-            >
-              ✓ Load Trusted Sample
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleLoadSample('suspicious')}
-              style={{ fontSize: '11px', borderColor: 'var(--color-suspicious-border)', color: 'var(--color-suspicious-text)', backgroundColor: 'var(--color-suspicious-bg)' }}
-            >
-              ⚠ Load Suspicious Sample
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleLoadSample('high_risk')}
-              style={{ fontSize: '11px', borderColor: 'var(--color-fake-border)', color: 'var(--color-fake-text)', backgroundColor: 'var(--color-fake-bg)' }}
-            >
-              🚨 Load High Risk Sample
-            </Button>
-          </div>
-        </div>
-      </Card>
 
       {/* Dual Input Methods Navigation Tabs */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-6)', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 'var(--space-2)' }}>

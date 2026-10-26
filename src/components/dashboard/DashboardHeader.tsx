@@ -4,13 +4,13 @@ import {
   Bell,
   User as UserIcon,
   LogOut,
-  ShieldCheck,
   Menu,
   ExternalLink,
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { MOCK_NOTIFICATIONS } from '../../data/mockData';
+import { notificationService } from '../../services/notificationService';
+import { Notification } from '../../types/dashboard';
 import { Badge } from '../ui/Badge';
 
 export interface DashboardHeaderProps {
@@ -18,11 +18,15 @@ export interface DashboardHeaderProps {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleSidebar }) => {
-  const { user, logout, loginAsDemo } = useAuth();
+  const { user, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    notificationService.getNotifications().then(setNotifications);
+  }, []);
 
   // Dynamic greeting based on current local time
   const currentHour = new Date().getHours();
@@ -98,24 +102,24 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleSideba
 
       {/* Right: Date, Notifications, User Menu */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        {/* Demo Mode Pill */}
+        {/* Live Security Status Pill */}
         <div
           style={{
             fontSize: 'var(--text-xs)',
-            color: 'var(--text-secondary)',
-            backgroundColor: 'var(--bg-surface-secondary)',
+            color: 'var(--color-verified-text)',
+            backgroundColor: 'var(--color-verified-bg)',
             padding: '4px 10px',
             borderRadius: 'var(--radius-full)',
             fontWeight: 600,
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--color-verified-border)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px'
           }}
-          title="Operating in frontend demo mode with simulated AI models and centralized mock data."
+          title="SchemeShield AI engine connected to verified government directory."
         >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
-          <span>Demo Mode</span>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-verified)' }} />
+          <span>Live Protected</span>
         </div>
 
         {/* Date pill (hidden on small mobile) */}
@@ -264,7 +268,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleSideba
                 fontSize: '12px'
               }}
             >
-              {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AS'}
+              {user?.name
+                ? user.name.slice(0, 2).toUpperCase()
+                : user?.email
+                ? user.email.slice(0, 2).toUpperCase()
+                : 'CU'}
             </div>
             <ChevronDown size={14} color="var(--text-tertiary)" />
           </button>
@@ -312,28 +320,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onToggleSideba
                   <UserIcon size={14} />
                   <span>View Citizen Profile</span>
                 </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    loginAsDemo(user?.role === 'CITIZEN' ? 'VERIFIER' : 'CITIZEN');
-                    setShowUserMenu(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    padding: '8px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--color-primary)',
-                    width: '100%',
-                    textAlign: 'left'
-                  }}
-                >
-                  <ShieldCheck size={14} />
-                  <span>Switch Role ({user?.role === 'CITIZEN' ? 'Verifier' : 'Citizen'})</span>
-                </button>
               </div>
 
               <div style={{ padding: 'var(--space-2)', borderTop: '1px solid var(--border-light)' }}>

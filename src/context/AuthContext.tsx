@@ -1,91 +1,107 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, LoginCredentials, SignupCredentials, AuthContextType } from '../types/auth';
-import { MOCK_CITIZEN_USER, MOCK_VERIFIER_USER } from '../data/mockData';
+import { authService } from '../services/authService';
+import { getToken, setToken } from '../services/apiClient';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'schemeshield_current_user';
+const USER_CACHE_KEY = 'schemeshield_current_user';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      const saved = localStorage.getItem(USER_CACHE_KEY);
+      const token = getToken();
+      if (saved && token) {
         return JSON.parse(saved);
       }
-      // Default to demo citizen session for seamless evaluator experience
-      
       return null;
     } catch {
       return null;
     }
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Validate session on mount
   useEffect(() => {
-    try {
-      if (user) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
+    let isMounted = true;
+    const verifySession = async () => {
+      const token = getToken();
+      if (!token) {
+        if (isMounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+        return;
       }
-    } catch {
-      // Ignore storage errors in restricted iframe
-    }
-  }, [user]);
+
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (isMounted) {
+          setUser(currentUser);
+          if (currentUser) {
+            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(currentUser));
+          } else {
+            localStorage.removeItem(USER_CACHE_KEY);
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem(USER_CACHE_KEY);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     setIsLoading(true);
-    // Simulate realistic network delay
-    await new Promise((res) => setTimeout(res, 600));
-
-    const loggedUser: User = {
-      ...MOCK_CITIZEN_USER,
-      email: credentials.email || MOCK_CITIZEN_USER.email,
-      name: credentials.email.split('@')[0].replace(/[._]/g, ' ') || MOCK_CITIZEN_USER.name,
-      lastActive: 'Just now'
-    };
-
-    setUser(loggedUser);
-    setIsLoading(false);
-    return true;
+    try {
+      const { user: loggedInUser } = await authService.login(credentials);
+      setUser(loggedInUser);
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(loggedInUser));
+      return true;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signup = async (credentials: SignupCredentials): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise((res) => setTimeout(res, 750));
-
-    const newUser: User = {
-      id: `usr-${Date.now().toString().slice(-4)}`,
-      name: credentials.name,
-      email: credentials.email,
-      phone: credentials.phone || '+91 98000 00000',
-      role: 'CITIZEN',
-      organization: credentials.organization || 'Independent Citizen Verifier',
-      avatarUrl: '',
-      joinedAt: 'Just now',
-      verificationsCount: 0,
-      lastActive: 'Just now'
-    };
-
-    setUser(newUser);
-    setIsLoading(false);
-    return true;
+    try {
+      const { user: newUser } = await authService.signup(credentials);
+      setUser(newUser);
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(newUser));
+      return true;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
+    authService.logout();
     setUser(null);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(USER_CACHE_KEY);
     } catch {
       // ignore
     }
   };
 
-  const loginAsDemo = (role: 'CITIZEN' | 'VERIFIER' = 'CITIZEN') => {
-    const demoUser = role === 'VERIFIER' ? MOCK_VERIFIER_USER : MOCK_CITIZEN_USER;
-    setUser(demoUser);
+  const loginAsDemo = () => {
+    // Deprecated no-op: demo accounts are strictly removed in live backend mode
   };
 
   const value: AuthContextType = {
@@ -95,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
-    loginAsDemo
+    loginAsDemo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -108,3 +124,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

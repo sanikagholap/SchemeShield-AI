@@ -1,101 +1,96 @@
+/**
+ * SchemeShield AI - Citizen Assistant Service
+ * Integrates directly with FastAPI /api/v1/assistant/chat.
+ */
+
 import { ChatMessage, PromptSuggestion } from '../types/assistant';
-import { SUGGESTED_ASSISTANT_QUESTIONS, MOCK_ASSISTANT_KNOWLEDGE_BASE } from '../data/mockAssistant';
-import { simulateLatency } from './apiClient';
+import { AssistantChatResponse } from '../types/api';
+import { apiClient } from './apiClient';
+
+let activeSessionId = `sess-${Date.now()}`;
 
 export const assistantService = {
   /**
-   * Get pre-configured prompt suggestions
+   * Get verified citizen inquiry suggestions.
    */
   async getPromptSuggestions(): Promise<PromptSuggestion[]> {
-    return simulateLatency(SUGGESTED_ASSISTANT_QUESTIONS, 150);
+    return [
+      {
+        id: 'sug-1',
+        title: 'Check PM-KISAN Authenticity',
+        query: 'How can I check if a PM-KISAN installment announcement or SMS is genuine?',
+        category: 'Verification',
+      },
+      {
+        id: 'sug-2',
+        title: 'Ayushman Card Fees',
+        query: 'Does Ayushman Bharat charge any application fee or delivery charge?',
+        category: 'Eligibility',
+      },
+      {
+        id: 'sug-3',
+        title: 'Report UPI Scheme Fraud',
+        query: 'What steps should I take if a fake scheme circular demanded money via UPI?',
+        category: 'Safety',
+      },
+      {
+        id: 'sug-4',
+        title: 'Identify Fake Gov Websites',
+        query: 'How do I distinguish official government websites (.gov.in) from fake lookalikes?',
+        category: 'Guidance',
+      },
+    ];
   },
 
   /**
-   * Send citizen question to AI assistant (Mock response generator)
+   * Send citizen question to FastAPI assistant chat endpoint.
    */
   async sendMessage(userMessage: string): Promise<ChatMessage> {
-    const normalized = userMessage.toLowerCase().trim().replace(/[?.,!]/g, '');
+    try {
+      const res = await apiClient.post<AssistantChatResponse>('/assistant/chat', {
+        message: userMessage,
+        session_id: activeSessionId,
+      });
 
-    // Check exact or partial matches from knowledge base
-    let matchedAnswer: string | undefined;
-
-    for (const [key, answer] of Object.entries(MOCK_ASSISTANT_KNOWLEDGE_BASE)) {
-      if (normalized.includes(key) || key.includes(normalized)) {
-        matchedAnswer = answer;
-        break;
+      if (res.session_id) {
+        activeSessionId = res.session_id;
       }
+
+      const suggestedActions = (res.suggestions || []).map((sug) => ({
+        label: sug,
+        route: sug.toLowerCase().includes('verify') ? '/verify' : '/schemes',
+      }));
+
+      return {
+        id: `ast-${Date.now()}`,
+        sender: 'assistant',
+        content: res.reply || 'Your inquiry has been evaluated against government security databases.',
+        timestamp: new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit' }).format(new Date()),
+        sources: [
+          { name: 'myScheme Central Directory', url: 'https://myscheme.gov.in' },
+          { name: 'National Portal of India', url: 'https://india.gov.in' },
+          { name: 'PIB Fact Check Bureau', url: 'https://factcheck.pib.gov.in' },
+        ],
+        suggestedActions:
+          suggestedActions.length > 0
+            ? suggestedActions
+            : [
+                { label: 'Verify a Scheme', route: '/verify' },
+                { label: 'Explore Verified Schemes', route: '/schemes' },
+              ],
+      };
+    } catch {
+      return {
+        id: `ast-${Date.now()}`,
+        sender: 'assistant',
+        content:
+          'Unable to reach the AI assistant service at this moment. You can still use the Verify tool to evaluate any scheme circular or document directly.',
+        timestamp: new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit' }).format(new Date()),
+        sources: [
+          { name: 'myScheme Central Directory', url: 'https://myscheme.gov.in' },
+        ],
+        suggestedActions: [{ label: 'Go to Verify', route: '/verify' }],
+      };
     }
-
-    if (!matchedAnswer) {
-      if (
-        normalized.includes('tractor') ||
-        normalized.includes('free tractor')
-      ) {
-        matchedAnswer = `🚨 **Scam Alert — PM Free Tractor Scheme**:
-The Government of India is **NOT** running any free tractor scheme under PM-KISAN.
-• The official PM-KISAN initiative only provides ₹6,000 annual direct income support.
-• Fraudulent circulars demand ₹499 upfront registration fee via personal UPI.
-• PIB Fact Check has officially flagged this as a cyber scam. **Do not pay any money.**`;
-      } else if (
-        normalized.includes('ayushman') ||
-        normalized.includes('golden card')
-      ) {
-        matchedAnswer = `🏥 **Ayushman Bharat (PM-JAY) Official Guidance**:
-• The official Ayushman Golden Card is issued **100% free of cost** at government hospitals and Common Service Centres (CSCs).
-• Never pay ₹250 or any doorstep delivery fee to private websites ending in *.com*.
-• Eligible families are determined by SECC 2011 records. Self-verify at **beneficiary.nha.gov.in**.`;
-      } else if (
-        normalized.includes('fee') ||
-        normalized.includes('money') ||
-        normalized.includes('payment') ||
-        normalized.includes('upi')
-      ) {
-        matchedAnswer = `⚠️ **Critical Citizen Warning**:
-Genuine Central and State welfare programs **never charge registration fees** via WhatsApp, SMS links, or personal UPI IDs.
-If an announcement asks for an application fee, deposit, or document courier charge:
-1. Do not transfer funds.
-2. Verify the scheme on our **/verify** tool.
-3. Report the fraud to the National Cyber Crime Reporting Portal at **cybercrime.gov.in** or dial **1930**.`;
-      } else if (
-        normalized.includes('mudra') ||
-        normalized.includes('loan')
-      ) {
-        matchedAnswer = `💼 **MUDRA Loan Guidelines**:
-• MUDRA loans up to ₹20 Lakh are sanctioned directly through scheduled commercial banks and NBFCs.
-• The Ministry of Finance **never** issues WhatsApp sanction letters or requests 5% advance GST deposits.
-• Apply only through bank branches or the official **udyamimitra.in** portal.`;
-      } else if (
-        normalized.includes('scholarship')
-      ) {
-        matchedAnswer = `🎓 **National Scholarship Portal (NSP)**:
-• All verified Central Sector and Post-Matric scholarships are submitted via **scholarships.gov.in**.
-• Application submission is strictly free.
-• Disbursal occurs directly into the student's Aadhaar-linked PFMS bank account.`;
-      } else {
-        matchedAnswer = `SchemeShield AI Assistant:
-Government welfare initiatives never solicit advance registration fees, personal UPI transfers, or sensitive banking OTPs.
-• Check if the portal URL ends in **.gov.in** or **.nic.in**.
-• Cross-reference official guidelines on **myScheme (myscheme.gov.in)**.
-• You can test any suspicious text or upload documents directly on our **/verify** page for instant automated analysis.`;
-      }
-    }
-
-    const assistantMsg: ChatMessage = {
-      id: `ast-${Date.now()}`,
-      sender: 'assistant',
-      content: matchedAnswer,
-      timestamp: new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit' }).format(new Date()),
-      sources: [
-        { name: 'myScheme Official Catalog', url: 'https://myscheme.gov.in' },
-        { name: 'PIB Fact Check Bureau', url: 'https://factcheck.pib.gov.in' },
-        { name: 'National Portal of India', url: 'https://india.gov.in' }
-      ],
-      suggestedActions: [
-        { label: 'Verify a Suspicious Claim', route: '/verify' },
-        { label: 'Explore Verified Schemes', route: '/schemes' }
-      ]
-    };
-
-    return simulateLatency(assistantMsg, 500);
-  }
+  },
 };

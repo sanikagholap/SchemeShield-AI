@@ -8,7 +8,6 @@ import {
   Building2,
   AlertTriangle,
   RotateCcw,
-  Info,
   X,
   Eye,
   Layers,
@@ -87,27 +86,6 @@ export const SchemesPage: React.FC = () => {
         <p style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
           Discover and review government schemes from a centralized interface. Browse legitimate welfare programs, official application guidelines, and active scam advisories.
         </p>
-      </div>
-
-      {/* Subtle Demo Data Notice */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-3)',
-          padding: 'var(--space-3) var(--space-4)',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--color-info-bg)',
-          border: '1px solid var(--color-info-border)',
-          color: 'var(--color-info-text)',
-          marginBottom: 'var(--space-8)',
-          fontSize: 'var(--text-xs)'
-        }}
-      >
-        <Info size={16} style={{ flexShrink: 0 }} />
-        <div>
-          <strong>Demo data:</strong> Live government-source verification will be connected through the backend. Information shown below reflects verified reference standards.
-        </div>
       </div>
 
       {/* Search and Filter Controls Toolbar */}

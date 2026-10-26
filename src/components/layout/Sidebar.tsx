@@ -117,22 +117,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
         <div style={{ height: '1px', backgroundColor: 'var(--border-light)', margin: 'var(--space-4) var(--space-2)' }} />
 
-        {/* Quick Threat Alert widget */}
+        {/* System Protection Badge */}
         <div
           style={{
             margin: '0 var(--space-2)',
             padding: 'var(--space-3)',
-            backgroundColor: 'var(--color-fake-bg)',
-            border: '1px solid var(--color-fake-border)',
+            backgroundColor: 'var(--color-primary-light)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-fake-text)', fontWeight: 700, fontSize: '11px' }}>
-            <ShieldAlert size={14} />
-            <span>Active Phishing Wave</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-primary)', fontWeight: 700, fontSize: '11px' }}>
+            <ShieldCheck size={14} />
+            <span>GovTech Protection Active</span>
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--color-fake-text)', marginTop: '4px', marginBottom: 0, lineHeight: 1.4 }}>
-            "PM Free Tractor Scheme" soliciting ₹499 via UPI. PIB Fact Check confirmed fraudulent.
+          <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', marginBottom: 0, lineHeight: 1.4 }}>
+            Direct API connection to FastAPI verification and central scheme registry.
           </p>
         </div>
       </nav>
@@ -165,7 +165,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
               flexShrink: 0
             }}
           >
-            {user?.name ? user.name.slice(0, 2).toUpperCase() : 'AS'}
+            {user?.name
+              ? user.name.slice(0, 2).toUpperCase()
+              : user?.email
+              ? user.email.slice(0, 2).toUpperCase()
+              : 'CU'}
           </div>
           <div style={{ overflow: 'hidden' }}>
             <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
   Shield,
@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Info,
   Eye,
   AlertOctagon,
   Copy,
@@ -23,22 +22,34 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PageContainer } from '../components/ui/PageContainer';
 import { VerificationResult, SimilarScheme } from '../types/verification';
+import { verificationService } from '../services/verificationService';
 import { useToast } from '../hooks/useToast';
-import {
-  TRUSTED_MOCK_RESULT,
-  SUSPICIOUS_MOCK_RESULT,
-  HIGH_RISK_MOCK_RESULT,
-  NEEDS_REVIEW_MOCK_RESULT
-} from '../data/mockVerificationResults';
 
 export const VerificationResultPage: React.FC = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Initialize from location state if passed, else default to HIGH_RISK or TRUSTED
-  const initialResult: VerificationResult = location.state?.result || HIGH_RISK_MOCK_RESULT;
-  const [activeResult, setActiveResult] = useState<VerificationResult>(initialResult);
+  const [activeResult, setActiveResult] = useState<VerificationResult | null>(
+    location.state?.result || null
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!location.state?.result);
+
+  React.useEffect(() => {
+    if (!activeResult) {
+      const id = searchParams.get('id');
+      if (id) {
+        setIsLoading(true);
+        verificationService.getVerificationById(id).then((res) => {
+          setActiveResult(res);
+          setIsLoading(false);
+        });
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [activeResult, searchParams]);
 
   // Modal & Toast States
   const [selectedSimilarScheme, setSelectedSimilarScheme] = useState<SimilarScheme | null>(null);
@@ -53,15 +64,16 @@ export const VerificationResultPage: React.FC = () => {
   };
 
   // Status configuration helper
-  const resolvedStatus =
-    activeResult.overallStatus ||
-    (activeResult.status === 'SAFE'
-      ? 'TRUSTED'
-      : activeResult.status === 'FAKE'
-      ? 'HIGH RISK'
-      : activeResult.status === 'SUSPICIOUS'
-      ? 'SUSPICIOUS'
-      : 'NEEDS REVIEW');
+  const resolvedStatus = activeResult
+    ? activeResult.overallStatus ||
+      (activeResult.status === 'SAFE'
+        ? 'TRUSTED'
+        : activeResult.status === 'FAKE'
+        ? 'HIGH RISK'
+        : activeResult.status === 'SUSPICIOUS'
+        ? 'SUSPICIOUS'
+        : 'NEEDS REVIEW')
+    : 'TRUSTED';
 
   const getStatusMeta = (status: string) => {
     switch (status) {
@@ -112,7 +124,35 @@ export const VerificationResultPage: React.FC = () => {
 
   const statusMeta = getStatusMeta(resolvedStatus);
 
-  // SVG Circular Gauge calculations
+  if (isLoading) {
+    return (
+      <PageContainer style={{ paddingTop: 'var(--space-16)', paddingBottom: 'var(--space-20)', textAlign: 'center' }}>
+        <div style={{ color: 'var(--color-primary)', fontSize: 'var(--text-lg)', fontWeight: 600 }}>
+          Loading verification audit report...
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!activeResult) {
+    return (
+      <PageContainer style={{ paddingTop: 'var(--space-16)', paddingBottom: 'var(--space-20)' }}>
+        <Card variant="glass" padding="lg" style={{ textAlign: 'center', maxWidth: '580px', margin: '0 auto' }}>
+          <ShieldCheck size={48} color="var(--color-primary)" style={{ margin: '0 auto var(--space-4)' }} />
+          <h2 style={{ fontSize: 'var(--text-2xl)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 'var(--space-2)' }}>
+            No Verification Report Selected
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)', lineHeight: 1.6, marginBottom: 'var(--space-6)' }}>
+            Submit scheme details, website URLs, or circular documents to the verification engine to receive an authentic security audit report.
+          </p>
+          <Button variant="primary" onClick={() => navigate('/verify')}>
+            Go to Verify Engine
+          </Button>
+        </Card>
+      </PageContainer>
+    );
+  }
+
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const safeScore = Math.min(100, Math.max(0, activeResult.riskScore));
@@ -223,87 +263,7 @@ export const VerificationResultPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Variant Switcher Bar for Evaluators & Citizens */}
-      <Card
-        variant="glass"
-        padding="sm"
-        style={{
-          marginBottom: 'var(--space-6)',
-          backgroundColor: 'var(--bg-surface-secondary)',
-          border: '1px solid var(--border-medium)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>
-              Inspect Result Variant:
-            </span>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-              Toggle mock state to preview UI variations:
-            </span>
-          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-            <Button
-              type="button"
-              variant={resolvedStatus === 'TRUSTED' ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setActiveResult(TRUSTED_MOCK_RESULT)}
-              style={{ fontSize: '11px', height: '28px' }}
-            >
-              ✓ Trusted (14/100)
-            </Button>
-            <Button
-              type="button"
-              variant={resolvedStatus === 'SUSPICIOUS' ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setActiveResult(SUSPICIOUS_MOCK_RESULT)}
-              style={{ fontSize: '11px', height: '28px' }}
-            >
-              ⚠ Suspicious (64/100)
-            </Button>
-            <Button
-              type="button"
-              variant={resolvedStatus === 'HIGH RISK' ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setActiveResult(HIGH_RISK_MOCK_RESULT)}
-              style={{ fontSize: '11px', height: '28px' }}
-            >
-              🚨 High Risk (94/100)
-            </Button>
-            <Button
-              type="button"
-              variant={resolvedStatus === 'NEEDS REVIEW' ? 'primary' : 'outline'}
-              size="sm"
-              onClick={() => setActiveResult(NEEDS_REVIEW_MOCK_RESULT)}
-              style={{ fontSize: '11px', height: '28px' }}
-            >
-              🔍 Needs Review (42/100)
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Mandatory Prototype Disclaimer Banner */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-3)',
-          padding: 'var(--space-3) var(--space-4)',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--color-info-bg)',
-          border: '1px solid var(--color-info-border)',
-          color: 'var(--color-info-text)',
-          marginBottom: 'var(--space-8)',
-          fontSize: 'var(--text-xs)'
-        }}
-      >
-        <Info size={16} style={{ flexShrink: 0 }} />
-        <div>
-          <strong>DEMO RESULT:</strong> Backend AI verification is not connected yet. This report demonstrates the SchemeShield AI verification interface using realistic centralized mock datasets.
-        </div>
-      </div>
 
       {/* Main Top Banner: Status + Scheme Title */}
       <div

@@ -170,6 +170,7 @@ export interface VerificationResult {
     officialUrl: string;
     schemeId: string;
   };
+  findings?: string[];
   recommendation: string;
   isMockDemo?: boolean;
   // Compatibility fields

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { AuthLayout } from '../components/auth/AuthLayout';
@@ -15,7 +15,7 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { login, loginAsDemo } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,18 +43,10 @@ export const LoginPage: React.FC = () => {
       setTimeout(() => {
         navigate(from, { replace: true });
       }, 500);
-    } catch {
-      setErrorMessage('Authentication could not complete. Please retry.');
+    } catch (err: any) {
+      setErrorMessage(err?.message || err?.userFriendlyMessage || 'Invalid email or password. Please verify and retry.');
       setIsSubmitting(false);
     }
-  };
-
-  const handleDemoLogin = (role: 'CITIZEN' | 'VERIFIER') => {
-    loginAsDemo(role);
-    setSuccessMessage(`Signed in as Demo ${role === 'VERIFIER' ? 'Verifier' : 'Citizen'}! Redirecting...`);
-    setTimeout(() => {
-      navigate(from, { replace: true });
-    }, 400);
   };
 
   return (
@@ -173,61 +165,6 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Quick Demo Login Option for evaluators */}
-          <div style={{ marginTop: 'var(--space-6)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--border-light)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-tertiary)', marginBottom: 'var(--space-3)' }}>
-              <Sparkles size={12} color="var(--color-brand-accent)" />
-              <span>Or test with zero setup via instant demo profile:</span>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('CITIZEN')}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--bg-surface-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s'
-                }}
-              >
-                <UserCheck size={14} color="var(--color-primary)" />
-                <span>Demo Citizen</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('VERIFIER')}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--bg-surface-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.15s'
-                }}
-              >
-                <UserCheck size={14} color="#7c3aed" />
-                <span>Demo Verifier</span>
-              </button>
-            </div>
-          </div>
 
           {/* Footer Link to Signup */}
           <div style={{ textAlign: 'center', marginTop: 'var(--space-5)', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>

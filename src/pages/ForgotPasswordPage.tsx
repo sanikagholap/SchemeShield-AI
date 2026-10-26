@@ -166,7 +166,7 @@ export const ForgotPasswordPage: React.FC = () => {
                   Reset Link Dispatched
                 </h3>
                 <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
-                  We sent recovery instructions to <strong>{email}</strong>. (Simulated mock flow).
+                  We sent recovery instructions to <strong>{email}</strong>.
                 </p>
               </div>
 

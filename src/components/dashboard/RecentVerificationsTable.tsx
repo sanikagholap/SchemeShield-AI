@@ -1,10 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink, ShieldCheck, AlertTriangle, ShieldAlert, ArrowRight, Eye } from 'lucide-react';
+import { ArrowRight, Eye } from 'lucide-react';
 import { RecentVerificationItem } from '../../types/dashboard';
 import { Button } from '../ui/Button';
 import { Card, CardHeader, CardTitle } from '../ui/Card';
-import { Badge } from '../ui/Badge';
 import { StatusIndicator } from '../ui/StatusIndicator';
 
 export interface RecentVerificationsTableProps {

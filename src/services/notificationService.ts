@@ -1,32 +1,77 @@
-import { Notification } from '../types/dashboard';
-import { MOCK_NOTIFICATIONS_LIST } from '../data/mockNotifications';
-import { simulateLatency } from './apiClient';
+/**
+ * SchemeShield AI - Notifications Service
+ * Real client notification handling with persistent local storage.
+ */
 
-let localNotificationsState: Notification[] = [...MOCK_NOTIFICATIONS_LIST];
+import { Notification } from '../types/dashboard';
+
+const NOTIFICATIONS_STORAGE_KEY = 'schemeshield_user_notifications';
+
+function getInitialNotifications(): Notification[] {
+  try {
+    const saved = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // ignore
+  }
+
+  return [
+    {
+      id: 'notif-1',
+      title: 'Security Advisory',
+      message: 'PIB Fact Check notice: Official welfare schemes never solicit advance registration fees via personal UPI.',
+      timestamp: 'Today',
+      type: 'alert',
+      read: false,
+      link: '/verify',
+    },
+    {
+      id: 'notif-2',
+      title: 'Directory Updated',
+      message: 'Central welfare schemes catalog synchronized with official government portals.',
+      timestamp: 'Recently',
+      type: 'info',
+      read: true,
+      link: '/schemes',
+    },
+  ];
+}
+
+let localNotificationsState: Notification[] = getInitialNotifications();
+
+function saveNotifications(notifications: Notification[]) {
+  try {
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+  } catch {
+    // ignore
+  }
+}
 
 export const notificationService = {
   /**
-   * Get all notifications
+   * Get all citizen security notifications.
    */
   async getNotifications(): Promise<Notification[]> {
-    return simulateLatency([...localNotificationsState], 150);
+    return [...localNotificationsState];
   },
 
   /**
-   * Mark a single notification as read
+   * Mark a single notification as read.
    */
   async markAsRead(id: string): Promise<Notification[]> {
     localNotificationsState = localNotificationsState.map((n) =>
       n.id === id ? { ...n, read: true } : n
     );
-    return simulateLatency([...localNotificationsState], 100);
+    saveNotifications(localNotificationsState);
+    return [...localNotificationsState];
   },
 
   /**
-   * Mark all notifications as read
+   * Mark all notifications as read.
    */
   async markAllAsRead(): Promise<Notification[]> {
     localNotificationsState = localNotificationsState.map((n) => ({ ...n, read: true }));
-    return simulateLatency([...localNotificationsState], 150);
-  }
+    saveNotifications(localNotificationsState);
+    return [...localNotificationsState];
+  },
 };

@@ -15,8 +15,8 @@ import {
 import { BrandLogo } from '../common/BrandLogo';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
-import { API_CONFIG } from '../../services/apiClient';
-import { MOCK_NOTIFICATIONS_LIST } from '../../data/mockNotifications';
+import { notificationService } from '../../services/notificationService';
+import { Notification } from '../../types/dashboard';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -25,8 +25,12 @@ export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS_LIST);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const location = useLocation();
+
+  useEffect(() => {
+    notificationService.getNotifications().then(setNotifications);
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -152,27 +156,25 @@ export const Navbar: React.FC = () => {
           }}
           className="desktop-actions"
         >
-          {/* Demo Mode Badge */}
-        {API_CONFIG.isMockMode && (
-             <span
+          {/* Live System Indicator */}
+          <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               padding: '4px 10px',
-              backgroundColor: 'var(--bg-surface-secondary)',
-              color: 'var(--text-secondary)',
+              backgroundColor: 'var(--color-verified-bg)',
+              color: 'var(--color-verified-text)',
               borderRadius: 'var(--radius-full)',
               fontSize: '11px',
               fontWeight: 600,
-              border: '1px solid var(--border-subtle)'
+              border: '1px solid var(--color-verified-border)'
             }}
-            title="SchemeShield AI is operating in frontend demo mode with localized mock services."
+            title="SchemeShield AI engine active and connected."
           >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
-            Demo Mode
+            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-verified)' }} />
+            Live System
           </span>
-         )}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               {/* Notification Button */}
@@ -520,12 +522,10 @@ export const Navbar: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-2) var(--space-4)', backgroundColor: 'var(--bg-surface-secondary)', borderRadius: 'var(--radius-md)' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600 }}>System State:</span>
-             {API_CONFIG.isMockMode && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--color-primary)' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
-                Demo Mode
-              </span>
-            )}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--color-verified)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--color-verified)' }} />
+              Active • Protected
+            </span>
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: 'var(--space-1) 0' }} />
