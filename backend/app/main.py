@@ -9,6 +9,7 @@ from app.config import get_settings
 from app.database.connection import init_db
 from app.routes.health import router as health_router
 from app.routes.api_v1 import api_v1_router
+from app.routes.auth import router as auth_router
 from app.utils.exceptions import (
     AppException,
     app_exception_handler,
@@ -28,14 +29,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Application lifecycle manager for startup and shutdown procedures.
     """
     logger.info(f"Starting {settings.PROJECT_NAME} v{settings.VERSION} [{settings.ENVIRONMENT}]")
-    
+
     # 1. Initialize SQLite database schemas
     init_db()
-    
+
     # 2. Ensure upload directories exist
     upload_dir = ensure_upload_directory()
     logger.info(f"File upload directory verified: {upload_dir.resolve()}")
-    
+
     logger.info("SchemeShield AI backend initialization complete.")
     yield
     logger.info("SchemeShield AI backend shutting down.")
@@ -60,9 +61,11 @@ def create_application() -> FastAPI:
     )
 
     # Configure CORS for decoupled frontend development
+    # allow_origin_regex allows frontend on other laptops on the same Wi-Fi LAN to connect with credentials
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
+        allow_origin_regex=r"^https?://.*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -80,6 +83,9 @@ def create_application() -> FastAPI:
 
     # Versioned API routes under /api/v1
     app.include_router(api_v1_router)
+
+    # Direct mount for unversioned auth endpoints (/auth/register, /auth/signup, /auth/login, etc.)
+    app.include_router(auth_router)
 
     return app
 

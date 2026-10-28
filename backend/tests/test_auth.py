@@ -261,3 +261,79 @@ def test_logout_endpoint(client):
     )
     assert logout_resp.status_code == 200
     assert logout_resp.json()["success"] is True
+
+
+def test_signup_alias_and_token_for_split(client):
+    """Verifies that signup returns access_token, token, and user name that can be safely split in frontend."""
+    payload = {
+        "email": "signup.alias@example.com",
+        "password": "Password123!",
+        "full_name": "Sanika Gholap",
+    }
+    # Test POST /api/v1/auth/signup alias
+    resp = client.post("/api/v1/auth/signup", json=payload)
+    assert resp.status_code == 201
+    data = resp.json()
+
+    # Frontend checks: token and access_token must exist and split as JWT
+    assert "access_token" in data and data["access_token"]
+    assert "token" in data and data["token"]
+    assert len(data["token"].split(".")) == 3  # Valid JWT format: header.payload.signature
+
+    # User name checks: user.name and user.full_name must exist and split safely
+    user = data["user"]
+    assert user["name"] == "Sanika Gholap"
+    assert user["full_name"] == "Sanika Gholap"
+    assert len(user["name"].split(" ")) == 2
+
+
+def test_signup_with_name_field_alias(client):
+    """Verifies that frontend sending 'name' instead of 'full_name' is handled cleanly."""
+    payload = {
+        "email": "name.alias@example.com",
+        "password": "Password123!",
+        "name": "Priya Patel",
+    }
+    resp = client.post("/api/v1/auth/register", json=payload)
+    assert resp.status_code == 201
+    user = resp.json()["user"]
+    assert user["name"] == "Priya Patel"
+    assert user["full_name"] == "Priya Patel"
+
+
+def test_auth_error_responses_include_detail_and_message(client):
+    """Verifies that 409 and 422 error envelopes include detail and message at root for frontend split calls."""
+    # 409 Conflict
+    payload = {
+        "email": "conflict.test@example.com",
+        "password": "Password123!",
+    }
+    client.post("/api/v1/auth/register", json=payload)
+    conflict_resp = client.post("/api/v1/auth/register", json=payload)
+    assert conflict_resp.status_code == 409
+    data = conflict_resp.json()
+    assert "detail" in data
+    assert "message" in data
+    assert isinstance(data["detail"], str)
+    assert len(data["detail"].split(" ")) > 1  # Safe to split in frontend error handler
+
+    # 422 Validation
+    val_resp = client.post("/api/v1/auth/register", json={"email": "bad", "password": "123"})
+    assert val_resp.status_code == 422
+    val_data = val_resp.json()
+    assert "detail" in val_data
+    assert isinstance(val_data["detail"], str)
+    assert len(val_data["detail"].split(";")) >= 1
+
+
+def test_cors_preflight_for_wifi_lan_origin(client):
+    """Verifies that frontend running on another laptop's IP over Wi-Fi is allowed via CORS preflight."""
+    headers = {
+        "Origin": "http://192.168.1.150:5173",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,authorization",
+    }
+    resp = client.options("/api/v1/auth/register", headers=headers)
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "http://192.168.1.150:5173"
+    assert resp.headers.get("access-control-allow-credentials") == "true"

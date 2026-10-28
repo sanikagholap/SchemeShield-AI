@@ -1,23 +1,26 @@
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
+from app.models.verification import VerificationRequest
 from app.schemas.verification import (
     DocumentVerificationResponse,
     OCRMetadata,
     URLVerificationRequest,
     URLVerificationResponse,
+    VerificationExplainResponse,
     VerificationHistoryItem,
     VerificationHistoryResponse,
     VerificationRequestCreate,
     VerificationResponse,
     VerificationStatsResponse,
 )
+from app.services.multilingual_service import MultilingualExplanationService
 from app.services.ocr_service import ocr_processing_service
 from app.services.url_service import url_inspection_service
 from app.services.verification_service import VerificationService, verification_service
@@ -34,15 +37,46 @@ from app.utils.logger import logger
 router = APIRouter(prefix="/verify", tags=["Scheme Verification"])
 
 
+def format_verification_response(
+    record: VerificationRequest,
+    lang: str = "en",
+    response_cls: Any = VerificationResponse,
+) -> Any:
+    """
+    Constructs a localized response model with consistent invariant scores
+    and citizen-facing explanations in English, Hindi, or Marathi.
+    """
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(record)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    score_breakdown = bundle_data["score_breakdown"]
+    localized_res = trilingual_bundle.get(lang, trilingual_bundle.get("en"))
+
+    resp = response_cls.model_validate(record)
+    resp.selected_language = lang
+    resp.scoring_policy_version = getattr(record, "scoring_policy_version", None) or bundle_data["scoring_policy_version"]
+    resp.evidence_coverage = getattr(record, "evidence_coverage", None) or bundle_data["evidence_coverage"]
+    resp.matched_scheme_id = getattr(record, "matched_scheme_id", None)
+    resp.category = getattr(record, "category", None)
+    resp.localization_completeness = getattr(record, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete")
+    resp.trilingual_explanations = trilingual_bundle
+    resp.score_breakdown = score_breakdown
+    resp.localized_result = localized_res
+    if localized_res and localized_res.get("summary"):
+        resp.explanation = localized_res["summary"]
+    return resp
+
+
 @router.post(
     "",
     response_model=VerificationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit a government scheme for verification",
-    description="Submits a scheme for immediate verification using the local AI/NLP analysis pipeline, returning an explainable risk assessment and evidence.",
+    description="Submits a scheme for immediate verification using the local AI/NLP analysis pipeline, returning an explainable risk assessment and evidence in the requested language (en, hi, mr).",
 )
 def submit_verification_request(
     payload: VerificationRequestCreate,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> VerificationResponse:
@@ -50,13 +84,14 @@ def submit_verification_request(
     Creates a new verification request record and runs the local AI/NLP verification pipeline
     synchronously, computing risk score, confidence score, result label, and structured evidence.
     """
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     record = VerificationService.create_verification_request(
         db=db,
         user_id=current_user.id,
         payload=payload,
     )
     processed_record = verification_service.process_verification(db=db, request=record)
-    return VerificationResponse.model_validate(processed_record)
+    return format_verification_response(processed_record, lang=selected_lang, response_cls=VerificationResponse)
 
 
 @router.post(
@@ -69,6 +104,8 @@ def submit_verification_request(
 async def verify_document(
     file: UploadFile = File(..., description="Uploaded scheme document, screenshot, or flyer"),
     scheme_name: Optional[str] = Form(None, description="Optional claimed scheme title"),
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DocumentVerificationResponse:
@@ -82,6 +119,7 @@ async def verify_document(
     6. Executes the local scheme verification pipeline.
     7. Returns complete explainable verification result with OCR metadata.
     """
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     ext = validate_file_extension(file.filename)
     upload_dir = ensure_upload_directory()
     safe_filename = generate_safe_filename(file.filename)
@@ -138,7 +176,11 @@ async def verify_document(
         extra_evidence_signal=doc_signal,
     )
 
-    response = DocumentVerificationResponse.model_validate(processed_record)
+    response = format_verification_response(
+        processed_record,
+        lang=selected_lang,
+        response_cls=DocumentVerificationResponse,
+    )
     response.ocr_metadata = OCRMetadata(
         extraction_method=extraction["extraction_method"],
         text_length=len(extracted_text),
@@ -158,6 +200,8 @@ async def verify_document(
 )
 def verify_url(
     payload: URLVerificationRequest,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> URLVerificationResponse:
@@ -170,6 +214,7 @@ def verify_url(
     5. Runs verification engine using extracted text and URL signals.
     6. Returns structured result and URL inspection evidence.
     """
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     is_valid, hostname, syntax_err = url_inspection_service.validate_url_syntax(payload.url)
     if not is_valid:
         raise AppException(syntax_err, status_code=400)
@@ -217,7 +262,11 @@ def verify_url(
         extra_evidence_signal=url_signal,
     )
 
-    response = URLVerificationResponse.model_validate(processed_record)
+    response = format_verification_response(
+        processed_record,
+        lang=selected_lang,
+        response_cls=URLVerificationResponse,
+    )
     response.page_fetched = fetch_result.get("page_fetched", False)
     response.content_analyzed = fetch_result.get("content_extracted", False)
     return response
@@ -228,13 +277,14 @@ def verify_url(
     response_model=VerificationHistoryResponse,
     status_code=status.HTTP_200_OK,
     summary="Get authenticated citizen's verification audit history",
-    description="Returns a paginated list of all scheme verification requests submitted by the current user, sorted newest first with optional result_label and status filters.",
+    description="Returns a paginated list of all scheme verification requests submitted by the current user, sorted newest first with optional result_label, status, and category filters.",
 )
 def get_verification_history(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     result_label: Optional[str] = Query(None, description="Filter by result label ('genuine', 'suspicious', 'duplicate', etc.)"),
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by verification processing status ('completed', 'pending', 'failed')"),
+    category: Optional[str] = Query(None, description="Filter by scheme beneficiary category ('Student', 'Farmer', 'Women', etc.)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> VerificationHistoryResponse:
@@ -248,6 +298,7 @@ def get_verification_history(
         page_size=page_size,
         result_label=result_label,
         status=status_filter,
+        category=category,
     )
     total_pages = math.ceil(total / page_size) if total > 0 else 1
 
@@ -281,6 +332,56 @@ def get_verification_stats(
 
 
 @router.get(
+    "/{verification_id}/explain",
+    response_model=VerificationExplainResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get dedicated explainable verification breakdown",
+    description="Returns detailed score justification, itemized point breakdown, localized checks in en/hi/mr, and evidence coverage.",
+)
+def explain_verification(
+    verification_id: int,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> VerificationExplainResponse:
+    """
+    Dedicated Explainability Endpoint:
+    Provides citizens with fully transparent, reproducible risk scoring justifications,
+    dimensional check evaluations, uncertainty impacts, and localized guidance.
+    """
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
+    record = VerificationService.get_verification_request(
+        db=db,
+        verification_id=verification_id,
+        user_id=current_user.id,
+        is_admin=current_user.is_admin,
+    )
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(record)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    score_breakdown = bundle_data["score_breakdown"]
+    localized_res = trilingual_bundle.get(selected_lang, trilingual_bundle.get("en"))
+
+    return VerificationExplainResponse(
+        verification_id=record.id,
+        scheme_name=record.scheme_name,
+        status=record.status,
+        risk_score=record.risk_score if record.risk_score is not None else 20.0,
+        confidence_score=record.confidence_score if record.confidence_score is not None else 50.0,
+        result_label=record.result_label or "unable_to_verify",
+        scoring_policy_version=bundle_data["scoring_policy_version"],
+        evidence_coverage=bundle_data["evidence_coverage"],
+        matched_scheme_id=getattr(record, "matched_scheme_id", None),
+        category=getattr(record, "category", None),
+        localization_completeness=getattr(record, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete"),
+        selected_language=selected_lang,
+        explanation=localized_res,
+        score_breakdown=score_breakdown,
+        created_at=record.created_at,
+    )
+
+
+@router.get(
     "/{verification_id}",
     response_model=VerificationResponse,
     status_code=status.HTTP_200_OK,
@@ -289,17 +390,21 @@ def get_verification_stats(
 )
 def get_verification_by_id(
     verification_id: int,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> VerificationResponse:
     """
     Retrieves a single verification record.
     Returns 404 if not found, or 403 Forbidden if attempted by another citizen.
+    Accepts 'lang' or 'language' parameter to return localized explanations without changing scores.
     """
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     record = VerificationService.get_verification_request(
         db=db,
         verification_id=verification_id,
         user_id=current_user.id,
         is_admin=current_user.is_admin,
     )
-    return VerificationResponse.model_validate(record)
+    return format_verification_response(record, lang=selected_lang, response_cls=VerificationResponse)

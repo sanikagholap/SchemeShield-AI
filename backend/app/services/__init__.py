@@ -7,6 +7,9 @@ from app.services.suspicious_detector_service import SuspiciousDetectorService
 from app.services.ocr_service import OCRProcessingService, ocr_processing_service
 from app.services.url_service import URLInspectionService, url_inspection_service
 from app.services.risk_scoring_service import RiskScoringService
+from app.services.scheme_ingestion_service import SchemeIngestionService, scheme_ingestion_service
+from app.services.beneficiary_service import BeneficiaryService, beneficiary_service
+from app.services.multilingual_service import MultilingualExplanationService, multilingual_service
 
 __all__ = [
     "AuthService",
@@ -21,4 +24,10 @@ __all__ = [
     "URLInspectionService",
     "url_inspection_service",
     "RiskScoringService",
+    "SchemeIngestionService",
+    "scheme_ingestion_service",
+    "BeneficiaryService",
+    "beneficiary_service",
+    "MultilingualExplanationService",
+    "multilingual_service",
 ]

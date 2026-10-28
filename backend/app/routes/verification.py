@@ -1,5 +1,6 @@
 from pathlib import Path
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from typing import Optional
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -7,6 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.common import APIResponse
 from app.schemas.verification import VerificationAnalyzeRequest, VerificationRequestCreate
+from app.services.multilingual_service import MultilingualExplanationService
 from app.services.ocr_service import ocr_processing_service
 from app.services.verification_service import VerificationService, verification_service
 from app.utils.exceptions import AppException
@@ -30,9 +32,12 @@ router = APIRouter(prefix="/verification", tags=["Verification"])
 )
 def analyze_scheme(
     payload: VerificationAnalyzeRequest,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> APIResponse[dict]:
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     resolved_title = (
         payload.title.strip()
         if payload.title and payload.title.strip()
@@ -50,6 +55,9 @@ def analyze_scheme(
         payload=req_payload,
     )
     processed = verification_service.process_verification(db=db, request=record)
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(processed)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    localized_res = trilingual_bundle.get(selected_lang, trilingual_bundle.get("en"))
 
     return APIResponse(
         success=True,
@@ -61,7 +69,16 @@ def analyze_scheme(
             "risk_score": processed.risk_score,
             "confidence_score": processed.confidence_score,
             "result_label": processed.result_label,
-            "explanation": processed.explanation,
+            "scoring_policy_version": bundle_data["scoring_policy_version"],
+            "evidence_coverage": bundle_data["evidence_coverage"],
+            "matched_scheme_id": getattr(processed, "matched_scheme_id", None),
+            "category": getattr(processed, "category", None),
+            "localization_completeness": getattr(processed, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete"),
+            "selected_language": selected_lang,
+            "explanation": localized_res["summary"] if localized_res else processed.explanation,
+            "localized_result": localized_res,
+            "score_breakdown": bundle_data["score_breakdown"],
+            "trilingual_explanations": trilingual_bundle,
             "evidence": processed.evidence,
         },
     )
@@ -76,9 +93,12 @@ def analyze_scheme(
 )
 async def upload_scheme_document(
     file: UploadFile = File(..., description="Uploaded scheme document or flyer"),
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> APIResponse[dict]:
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     ext = validate_file_extension(file.filename or "unknown")
     upload_dir = ensure_upload_directory()
     safe_filename = generate_safe_filename(file.filename or "unknown")
@@ -132,6 +152,9 @@ async def upload_scheme_document(
         request=record,
         extra_evidence_signal=doc_signal,
     )
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(processed)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    localized_res = trilingual_bundle.get(selected_lang, trilingual_bundle.get("en"))
 
     return APIResponse(
         success=True,
@@ -145,8 +168,66 @@ async def upload_scheme_document(
             "risk_score": processed.risk_score,
             "confidence_score": processed.confidence_score,
             "result_label": processed.result_label,
-            "explanation": processed.explanation,
+            "scoring_policy_version": bundle_data["scoring_policy_version"],
+            "evidence_coverage": bundle_data["evidence_coverage"],
+            "matched_scheme_id": getattr(processed, "matched_scheme_id", None),
+            "category": getattr(processed, "category", None),
+            "localization_completeness": getattr(processed, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete"),
+            "selected_language": selected_lang,
+            "explanation": localized_res["summary"] if localized_res else processed.explanation,
+            "localized_result": localized_res,
+            "score_breakdown": bundle_data["score_breakdown"],
+            "trilingual_explanations": trilingual_bundle,
             "evidence": processed.evidence,
+        },
+    )
+
+
+@router.get(
+    "/{verification_id}/explain",
+    response_model=APIResponse[dict],
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve detailed explainable verification breakdown by ID",
+    description="Returns itemized score justifications, trilingual evidence, localized checks, recommendations, and evidence coverage.",
+)
+def explain_verification_legacy(
+    verification_id: int,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> APIResponse[dict]:
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
+    record = VerificationService.get_verification_request(
+        db=db,
+        verification_id=verification_id,
+        user_id=current_user.id,
+        is_admin=current_user.is_admin,
+    )
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(record)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    score_breakdown = bundle_data["score_breakdown"]
+    localized_res = trilingual_bundle.get(selected_lang, trilingual_bundle.get("en"))
+
+    return APIResponse(
+        success=True,
+        message="Verification explanation retrieved successfully.",
+        data={
+            "verification_id": record.id,
+            "scheme_name": record.scheme_name,
+            "status": record.status,
+            "risk_score": record.risk_score if record.risk_score is not None else 20.0,
+            "confidence_score": record.confidence_score if record.confidence_score is not None else 50.0,
+            "result_label": record.result_label or "unable_to_verify",
+            "scoring_policy_version": bundle_data["scoring_policy_version"],
+            "evidence_coverage": bundle_data["evidence_coverage"],
+            "matched_scheme_id": getattr(record, "matched_scheme_id", None),
+            "category": getattr(record, "category", None),
+            "localization_completeness": getattr(record, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete"),
+            "selected_language": selected_lang,
+            "explanation": localized_res,
+            "score_breakdown": score_breakdown,
+            "created_at": record.created_at.isoformat() if record.created_at else None,
         },
     )
 
@@ -160,15 +241,23 @@ async def upload_scheme_document(
 )
 def get_verification_by_id(
     verification_id: int,
+    lang: Optional[str] = Query(None, description="Language code for user-facing explanations: 'en', 'hi', or 'mr'"),
+    language: Optional[str] = Query(None, description="Alternative alias for language parameter"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> APIResponse[dict]:
+    selected_lang = MultilingualExplanationService.resolve_language(lang, language)
     record = VerificationService.get_verification_request(
         db=db,
         verification_id=verification_id,
         user_id=current_user.id,
         is_admin=current_user.is_admin,
     )
+    bundle_data = MultilingualExplanationService.get_or_create_explanation_bundle(record)
+    trilingual_bundle = bundle_data["trilingual_explanations"]
+    score_breakdown = bundle_data["score_breakdown"]
+    localized_res = trilingual_bundle.get(selected_lang, trilingual_bundle.get("en"))
+
     return APIResponse(
         success=True,
         message="Verification record retrieved successfully.",
@@ -183,7 +272,16 @@ def get_verification_by_id(
             "risk_score": record.risk_score,
             "confidence_score": record.confidence_score,
             "result_label": record.result_label,
-            "explanation": record.explanation,
+            "scoring_policy_version": bundle_data["scoring_policy_version"],
+            "evidence_coverage": bundle_data["evidence_coverage"],
+            "matched_scheme_id": getattr(record, "matched_scheme_id", None),
+            "category": getattr(record, "category", None),
+            "localization_completeness": getattr(record, "localization_completeness", None) or bundle_data.get("localization_completeness", "complete"),
+            "selected_language": selected_lang,
+            "explanation": localized_res["summary"] if localized_res else record.explanation,
+            "localized_result": localized_res,
+            "score_breakdown": score_breakdown,
+            "trilingual_explanations": trilingual_bundle,
             "evidence": record.evidence,
             "created_at": record.created_at.isoformat() if record.created_at else None,
             "updated_at": record.updated_at.isoformat() if record.updated_at else None,

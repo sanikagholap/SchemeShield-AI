@@ -35,6 +35,11 @@ class VerificationRequest(Base, TimestampMixin):
     )  # genuine, suspicious, duplicate, potentially_fake, unable_to_verify
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     evidence: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    scoring_policy_version: Mapped[Optional[str]] = mapped_column(String(32), default="2.0", nullable=True)
+    evidence_coverage: Mapped[Optional[str]] = mapped_column(String(32), default="partial", nullable=True)
+    matched_scheme_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
+    category: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    localization_completeness: Mapped[Optional[str]] = mapped_column(String(32), default="complete", nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="verification_requests")
 

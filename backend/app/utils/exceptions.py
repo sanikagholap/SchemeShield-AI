@@ -61,6 +61,8 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         status_code=exc.status_code,
         content={
             "success": False,
+            "detail": exc.message,
+            "message": exc.message,
             "error": {
                 "message": exc.message,
                 "status_code": exc.status_code,
@@ -72,13 +74,16 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Handles standard HTTP exceptions."""
-    logger.info(f"HTTPException on {request.method} {request.url.path} (status {exc.status_code}): {exc.detail}")
+    msg = str(exc.detail)
+    logger.info(f"HTTPException on {request.method} {request.url.path} (status {exc.status_code}): {msg}")
     return JSONResponse(
         status_code=exc.status_code,
         content={
             "success": False,
+            "detail": msg,
+            "message": msg,
             "error": {
-                "message": str(exc.detail),
+                "message": msg,
                 "status_code": exc.status_code,
                 "details": {},
             },
@@ -90,20 +95,29 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handles Pydantic request validation errors."""
     logger.info(f"Validation error on {request.method} {request.url.path}: {exc.errors()}")
     formatted_errors = []
+    messages = []
     for err in exc.errors():
+        field = ".".join(str(loc) for loc in err.get("loc", []) if loc != "body")
+        msg = err.get("msg", "")
         formatted_errors.append(
             {
                 "loc": err.get("loc", []),
-                "msg": err.get("msg", ""),
+                "msg": msg,
                 "type": err.get("type", ""),
             }
         )
+        messages.append(f"{field}: {msg}" if field else msg)
+
+    combined_msg = "; ".join(messages) or "Input validation failed. Please check submitted payload."
+
     return JSONResponse(
         status_code=422,
         content={
             "success": False,
+            "detail": combined_msg,
+            "message": combined_msg,
             "error": {
-                "message": "Input validation failed. Please check submitted payload.",
+                "message": combined_msg,
                 "status_code": 422,
                 "details": {"validation_errors": formatted_errors},
             },
@@ -117,12 +131,15 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     Prevents database internals and stack traces from leaking to client responses.
     """
     logger.exception(f"Unhandled server error on {request.method} {request.url.path}: {str(exc)}")
+    fallback_msg = "An unexpected server error occurred. Please try again later."
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "success": False,
+            "detail": fallback_msg,
+            "message": fallback_msg,
             "error": {
-                "message": "An unexpected server error occurred. Please try again later.",
+                "message": fallback_msg,
                 "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "details": {},
             },

@@ -70,3 +70,26 @@ def get_current_active_user(
     if not current_user.is_active:
         raise ForbiddenException("Account is deactivated.")
     return current_user
+
+
+def get_optional_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    """
+    Optional authentication dependency.
+    Returns the User if a valid Bearer token is present, or None for guest requests.
+    Does not raise 401 when no token is supplied.
+    """
+    if credentials is None:
+        return None
+
+    try:
+        payload = decode_access_token(credentials.credentials)
+        subject = payload.get("sub")
+        if subject is None:
+            return None
+        user = AuthService.get_user_by_id(db, int(subject))
+        return user if user and user.is_active else None
+    except Exception:
+        return None

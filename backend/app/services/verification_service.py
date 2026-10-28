@@ -47,6 +47,11 @@ class VerificationService:
             risk_score=None,
             confidence_score=None,
             result_label=None,
+            scoring_policy_version="2.0",
+            evidence_coverage="partial",
+            matched_scheme_id=None,
+            category=getattr(payload, "category", None).strip() if getattr(payload, "category", None) else None,
+            localization_completeness="complete",
             explanation="Verification request registered. Awaiting analysis by verification engine.",
             evidence=None,
         )
@@ -88,10 +93,11 @@ class VerificationService:
         page_size: int = 20,
         result_label: Optional[str] = None,
         status: Optional[str] = None,
+        category: Optional[str] = None,
     ) -> Tuple[List[VerificationRequest], int]:
         """
         Lists verification requests belonging to a user, paginated, newest first.
-        Supports optional filtering by result_label and status.
+        Supports optional filtering by result_label, status, and category.
         """
         offset = (page - 1) * page_size
 
@@ -111,6 +117,11 @@ class VerificationService:
         if status and status.strip():
             total_stmt = total_stmt.where(VerificationRequest.status == status.strip())
             items_stmt = items_stmt.where(VerificationRequest.status == status.strip())
+
+        if category and category.strip():
+            cat_val = category.strip()
+            total_stmt = total_stmt.where(func.lower(VerificationRequest.category) == cat_val.lower())
+            items_stmt = items_stmt.where(func.lower(VerificationRequest.category) == cat_val.lower())
 
         total = db.scalar(total_stmt) or 0
         items = list(db.scalars(items_stmt.offset(offset).limit(page_size)).all())
@@ -210,9 +221,44 @@ class VerificationService:
                 evidence["signals"].insert(0, extra_evidence_signal)
 
             # 6. Update verification record
+            matched_id = duplicate_result.get("matched_scheme_id")
+            matched_scheme = next((s for s in candidate_schemes if s.id == matched_id), None) if matched_id else None
+
+            resolved_cat = request.category
+            if not resolved_cat and matched_scheme and matched_scheme.category:
+                resolved_cat = matched_scheme.category
+            elif not resolved_cat:
+                try:
+                    from app.services.beneficiary_service import BeneficiaryService
+                    cat_slugs, _, _ = BeneficiaryService.classify_scheme_categories({
+                        "name": request.scheme_name,
+                        "description": request.description or request.extracted_text or "",
+                    })
+                    slug_to_name = {
+                        "student": "Student",
+                        "teacher": "Teacher",
+                        "farmer": "Farmer",
+                        "women": "Women",
+                        "senior-citizen": "Senior Citizen",
+                        "entrepreneur": "Entrepreneur",
+                        "general-welfare": "General Welfare",
+                    }
+                    if cat_slugs:
+                        resolved_cat = slug_to_name.get(next(iter(cat_slugs)), "General Welfare")
+                    else:
+                        resolved_cat = "General Welfare"
+                except Exception as cat_exc:
+                    logger.debug(f"Category classification fallback: {cat_exc}")
+                    resolved_cat = "General Welfare"
+
             request.risk_score = assessment["risk_score"]
             request.confidence_score = assessment["confidence_score"]
             request.result_label = assessment["result_label"]
+            request.scoring_policy_version = assessment.get("scoring_policy_version", "2.0")
+            request.evidence_coverage = assessment.get("evidence_coverage", "partial")
+            request.matched_scheme_id = matched_id
+            request.category = resolved_cat
+            request.localization_completeness = assessment.get("localization_completeness", "complete")
             request.explanation = assessment["explanation"]
             request.evidence = evidence
             request.status = "completed"

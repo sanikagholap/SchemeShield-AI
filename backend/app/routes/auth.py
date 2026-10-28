@@ -33,13 +33,42 @@ def register(
 ) -> UserRegisterResponse:
     """
     Registers a new citizen account.
-    Returns safe user information excluding any password fields.
+    Returns safe user information and an active JWT token for immediate session creation.
     """
     user = AuthService.register_user(db=db, payload=payload)
+
+    # Issue active JWT token for immediate authentication on frontend signup
+    access_token = create_access_token(
+        data={
+            "sub": str(user.id),
+            "email": user.email,
+        }
+    )
+
+    user_resp = UserResponse.model_validate(user)
+
     return UserRegisterResponse(
         message="User registered successfully.",
-        user=UserResponse.model_validate(user),
+        access_token=access_token,
+        token=access_token,
+        token_type="bearer",
+        user=user_resp,
     )
+
+
+@router.post(
+    "/signup",
+    response_model=UserRegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new citizen account (alias for /register)",
+    description="Alias endpoint for frontend clients calling /signup instead of /register.",
+)
+def signup(
+    payload: UserRegisterRequest,
+    db: Session = Depends(get_db),
+) -> UserRegisterResponse:
+    """Convenience alias routing /signup directly to register."""
+    return register(payload=payload, db=db)
 
 
 @router.post(
@@ -58,7 +87,7 @@ def login(
     Returns JWT access token with user details on success.
     """
     user = AuthService.authenticate_user(db=db, payload=payload)
-    
+
     # Generate JWT access token with subject (user ID) claim
     access_token = create_access_token(
         data={
@@ -67,12 +96,30 @@ def login(
         }
     )
 
+    user_resp = UserResponse.model_validate(user)
+
     return TokenResponse(
         access_token=access_token,
+        token=access_token,
         token_type="bearer",
         expires_in_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-        user=UserResponse.model_validate(user),
+        user=user_resp,
     )
+
+
+@router.post(
+    "/signin",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Authenticate citizen (alias for /login)",
+    description="Alias endpoint for frontend clients calling /signin instead of /login.",
+)
+def signin(
+    payload: UserLoginRequest,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    """Convenience alias routing /signin directly to login."""
+    return login(payload=payload, db=db)
 
 
 @router.get(

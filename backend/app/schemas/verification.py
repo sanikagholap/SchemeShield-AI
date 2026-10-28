@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -31,6 +31,85 @@ class VerificationRequestCreate(BaseModel):
         default="text",
         description="Input channel type: 'text', 'url', or 'document'",
     )
+    category: Optional[str] = Field(
+        None,
+        max_length=128,
+        description="Claimed or estimated beneficiary category: Student, Farmer, Women, Senior Citizen, Entrepreneur, General Welfare",
+        examples=["Student"],
+    )
+
+
+class CheckExplanation(BaseModel):
+    """Structured evidence and explanation for an individual verification check."""
+    check_id: str = Field(..., description="Unique check identifier")
+    name: str = Field(..., description="Human-readable check title")
+    result: Literal["pass", "warning", "fail", "inconclusive"] = Field(..., description="Evaluation outcome: pass, warning, fail, inconclusive")
+    finding: str = Field(..., description="Fact-grounded finding summary")
+    evidence_url: Optional[str] = Field(None, description="Corroborating URL or official source reference")
+    score_contribution: float = Field(0.0, description="Points added or deducted from risk score")
+    score_reason: Optional[str] = Field(None, description="Reason for score contribution")
+    confidence: Optional[float] = Field(None, description="Calculated confidence level")
+    coverage: Literal["complete", "partial", "missing"] = Field("complete", description="Evidence completeness")
+    recommended_action: str = Field(..., description="Recommended citizen next action")
+    explanation: Dict[str, str] = Field(default_factory=dict, description="Trilingual explanation mapping {'en': ..., 'hi': ..., 'mr': ...}")
+
+
+class ScoreContributionItem(BaseModel):
+    """Transparent itemized contribution to final risk score."""
+    component: str = Field(..., description="Scoring rule component")
+    points: float = Field(..., description="Points contribution (+/-)")
+    direction: Literal["increase", "decrease", "neutral"] = Field(..., description="Impact on risk")
+    description: str = Field(..., description="Human-readable English description")
+    description_hi: Optional[str] = Field(None, description="Hindi explanation")
+    description_mr: Optional[str] = Field(None, description="Marathi explanation")
+
+
+class ScoreBreakdown(BaseModel):
+    """Complete, reproducible breakdown of how the final risk score was calculated."""
+    base_score: float = Field(20.0, description="Baseline unverified risk score")
+    contributions: List[ScoreContributionItem] = Field(default_factory=list, description="List of transparent point adjustments")
+    raw_score: Optional[float] = Field(None, description="Raw unconstrained score calculation")
+    final_risk_score: float = Field(..., ge=0.0, le=100.0, description="Final calculated risk score")
+    confidence_score: float = Field(..., ge=0.0, le=100.0, description="Observable evidence confidence")
+    evidence_coverage: str = Field("partial", description="Coverage rating: complete, partial, or missing")
+    scoring_policy_version: str = Field("2.0", description="Scoring rules policy version")
+    inconclusive_checks_impact: Optional[str] = Field(
+        default="Inconclusive checks contribute 0.0 points to risk score and do not penalize the citizen.",
+        description="Audit clarification on neutral impact of missing evidence",
+    )
+
+
+class LocalizedVerificationResult(BaseModel):
+    """Complete localized citizen-facing explanation in a single language."""
+    language: str = Field(..., description="Language code: en, hi, or mr")
+    result_label_localized: str = Field(..., description="Translated result label")
+    summary: str = Field(..., description="Overall verification outcome summary")
+    score_justification: str = Field(..., description="Detailed narrative explaining why this risk score was assigned")
+    status_meaning: str = Field(..., description="Explanation of what this verification status implies")
+    checks: List[CheckExplanation] = Field(default_factory=list, description="List of all verification checks with localized text")
+    missing_evidence_impact: str = Field(..., description="Explanation of missing evidence and uncertainty")
+    recommendations: List[str] = Field(default_factory=list, description="Citizen-friendly recommended steps")
+    limitations: List[str] = Field(default_factory=list, description="Official constraints and disclaimers")
+    localization_completeness: Optional[str] = Field("complete", description="Completeness status of translations: 'complete' or 'incomplete'")
+
+
+class VerificationExplainResponse(BaseModel):
+    """Dedicated explainable verification response with localized details."""
+    verification_id: int
+    scheme_name: str
+    status: str
+    risk_score: float
+    confidence_score: float
+    result_label: str
+    scoring_policy_version: str = "2.0"
+    evidence_coverage: str = "partial"
+    matched_scheme_id: Optional[int] = None
+    category: Optional[str] = None
+    localization_completeness: str = "complete"
+    selected_language: str = "en"
+    explanation: Union[LocalizedVerificationResult, Dict[str, Any]]
+    score_breakdown: Union[ScoreBreakdown, Dict[str, Any]]
+    created_at: datetime
 
 
 class VerificationResponse(BaseModel):
@@ -50,6 +129,15 @@ class VerificationResponse(BaseModel):
     result_label: Optional[str] = None
     explanation: Optional[str] = None
     evidence: Optional[Dict[str, Any]] = None
+    scoring_policy_version: Optional[str] = "2.0"
+    evidence_coverage: Optional[str] = "partial"
+    matched_scheme_id: Optional[int] = None
+    category: Optional[str] = None
+    localization_completeness: Optional[str] = "complete"
+    selected_language: str = "en"
+    localized_result: Optional[Union[LocalizedVerificationResult, Dict[str, Any]]] = None
+    score_breakdown: Optional[Union[ScoreBreakdown, Dict[str, Any]]] = None
+    trilingual_explanations: Optional[Dict[str, Union[LocalizedVerificationResult, Dict[str, Any]]]] = None
     created_at: datetime
     updated_at: datetime
 
@@ -69,6 +157,11 @@ class VerificationHistoryItem(BaseModel):
     confidence_score: Optional[float] = None
     result_label: Optional[str] = None
     explanation: Optional[str] = None
+    matched_scheme_id: Optional[int] = None
+    category: Optional[str] = None
+    scoring_policy_version: Optional[str] = "2.0"
+    evidence_coverage: Optional[str] = "partial"
+    localization_completeness: Optional[str] = "complete"
     created_at: datetime
     updated_at: datetime
 

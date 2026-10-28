@@ -43,7 +43,8 @@ class AuthService:
         # Hash password securely using bcrypt
         password_hash = hash_password(payload.password)
 
-        clean_full_name = payload.full_name.strip() if payload.full_name else None
+        raw_name = payload.full_name or getattr(payload, "name", None)
+        clean_full_name = raw_name.strip() if raw_name else None
 
         new_user = User(
             email=normalized_email,
